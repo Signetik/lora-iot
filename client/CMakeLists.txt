@@ -6,15 +6,21 @@
 #  *                                      SPDX-License-Identifier: BSD-4-Clause *
 #  *============================================================================*/
 
-cmake_minimum_required(VERSION 3.8.2)
-#cmake_minimum_required(VERSION 3.13.1)
+cmake_minimum_required(VERSION 3.13.1)
 
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
-project(send)
+project(client)
 
 
 set(sources
 	src/main.c
+	src/uart_task.c
+	src/vars.c
+	src/wdt_task.c
+	src/sigconfig.c
+	src/cbor.c
+	src/coap.c
+	src/cantcoap.c
 )
 
 # Main app
