@@ -1,0 +1,5 @@
+.DS_Store
+build_*
+release.tgz
+sigver.c
+_sigver.c
