@@ -14,13 +14,16 @@ project(client)
 
 set(sources
 	src/main.c
-	src/uart_task.c
-	src/vars.c
-	src/wdt_task.c
-	src/sigconfig.c
-	src/cbor.c
-	src/coap.c
-	src/cantcoap.c
+#	src/uart_task.c
+#	src/vars.c
+#	src/wdt_task.c
+#	src/sigconfig.c
+#	src/cbor.c
+#	src/coap.c
+#	src/cantcoap.c
+#	src/sysdep.c
+	src/LoRa_task.c
+	src/led_task.c
 )
 
 # Main app
