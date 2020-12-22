@@ -113,7 +113,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		return;
 	}
 
-	config.frequency = 915000000;
+	config.frequency = 902300000;
 	config.bandwidth = BW_125_KHZ;
 	config.datarate	= SF_10;
 	config.preamble_len	= 8;
