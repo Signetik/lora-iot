@@ -145,7 +145,9 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 
 		/* Block until data	arrives	or 5 seconds	passes */
-		len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000),
+		int16_t rssi;
+		int8_t snr;
+		int len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000),
 				&rssi, &snr);
 
 		if (len	< 0) {
