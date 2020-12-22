@@ -87,7 +87,12 @@ K_MSGQ_DEFINE(led_msgq,	sizeof(led_msg_t), 5, 4);
 void led_thread(void *p1, void *p2,	void *p3)
 {
 
-	static led_msg_t led_msg;
+	static led_msg_t led_msg = {
+		.red = false,
+		.green = false,
+		.blue = true,
+		.enable = true
+	};
 
 	led_r =	device_get_binding(LEDR_LABEL);
 	gpio_pin_configure(led_r, LEDR_PIN,	GPIO_OUTPUT_INACTIVE | LEDR_FLAGS);
