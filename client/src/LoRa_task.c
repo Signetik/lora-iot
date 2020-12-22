@@ -88,6 +88,24 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
+#if(0)
+	lorawan_start();
+	const struct lorawan_join_config lw_config = {
+		.abp = {
+			0x12341234,
+			dummy, /* app_skey */
+			dummy, /* nwk_skey */
+			dummy  /* app_eui */
+		},
+		.dev_eui = dummy,
+		.mode = LORAWAN_ACT_ABP
+	};
+	lorawan_join(&lw_config);
+	while (1) {
+		lorawan_send(1, "AB", 2, 0 /*LORAWAN_MSG_CONFIRMED*/);
+		k_sleep(K_MSEC(1000));
+	}
+#endif
 
 	lora_dev = device_get_binding(DEFAULT_RADIO);
 	if (!lora_dev) {
