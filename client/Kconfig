@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2019 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
+#
+
+menu "Signetik Client"
+
+module = SIGNETIK_CLIENT
+module-dep = LOG
+module-str = Signetik Client
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+endmenu
+
+menu "Zephyr Kernel"
+source "$ZEPHYR_BASE/Kconfig.zephyr"
+endmenu
