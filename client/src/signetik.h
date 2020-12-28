@@ -12,6 +12,9 @@
 #define	UART_STACKSIZE		1024
 #define	UART_PRIORITY		   2
 
+#define	BT_STACKSIZE		1024
+#define	BT_PRIORITY			   2
+
 #define	LED_STACKSIZE		 512
 #define	LED_PRIORITY		   3
 

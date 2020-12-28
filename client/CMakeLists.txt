@@ -24,8 +24,17 @@ set(sources
 #	src/sysdep.c
 	src/LoRa_task.c
 	src/led_task.c
+	src/bt_task.c
+	src/gatt_config_service.c
+#	src/modem-api/modem_interface_api.c
 )
 
 # Main app
 target_sources(app PRIVATE ${sources})
+#target_sources(app PRIVATE _sigver.c)
 
+#Modem options
+#target_sources_ifdef(CONFIG_SENSOR_POLLING_METHOD_UART_PUSH app PRIVATE src/modem-api/modem_binary_interface_api.c)
+#target_sources_ifdef(CONFIG_SENSOR_POLLING_METHOD_UART_PUSH app PRIVATE src/modem-api/modem_binary_interface_api_device.c)
+
+#target_sources_ifdef(CONFIG_SENSOR_POLLING_METHOD_UART_PUSH app PRIVATE src/modem-api/modem_ascii_interface_api.c)
