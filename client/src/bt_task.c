@@ -25,9 +25,6 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
-#include <bluetooth/services/bas.h>
-#include <bluetooth/services/hrs.h>
-
 #include <logging/log.h>
 
 #include "signetik.h"
@@ -54,20 +51,52 @@ LOG_MODULE_REGISTER(bt_task,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
  */
 
 /* Custom Service Variables	*/
+/*	   xxxx								*/
+/* 6a3a1400-5bd7-440d-b610-8019d41aa7f9	*/
+static struct bt_uuid_128 vnd_service_uuid	= BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x6a3a1400, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
+
+/*
+ * Characteristics UUID
+ */
+/* 6a3a1401-5bd7-440d-b610-8019d41aa7f9	*/
 static struct bt_uuid_128 vnd_uuid = BT_UUID_INIT_128(
-	0xf0, 0xde,	0xbc, 0x9a,	0x78, 0x56,	0x34, 0x12,
-	0x78, 0x56,	0x34, 0x12,	0x78, 0x56,	0x34, 0x12);
+	BT_UUID_128_ENCODE(0x6a3a1401, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
 
+/* 6a3a1402-5bd7-440d-b610-8019d41aa7f9	*/
 static struct bt_uuid_128 vnd_enc_uuid = BT_UUID_INIT_128(
-	0xf1, 0xde,	0xbc, 0x9a,	0x78, 0x56,	0x34, 0x12,
-	0x78, 0x56,	0x34, 0x12,	0x78, 0x56,	0x34, 0x12);
+	BT_UUID_128_ENCODE(0x6a3a1402, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
 
+/* 6a3a1403-5bd7-440d-b610-8019d41aa7f9	*/
 static struct bt_uuid_128 vnd_auth_uuid	= BT_UUID_INIT_128(
-	0xf2, 0xde,	0xbc, 0x9a,	0x78, 0x56,	0x34, 0x12,
-	0x78, 0x56,	0x34, 0x12,	0x78, 0x56,	0x34, 0x12);
+	BT_UUID_128_ENCODE(0x6a3a1403, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
+
+/* 6a3a1404-5bd7-440d-b610-8019d41aa7f9	*/
+static const struct	bt_uuid_128	vnd_long_uuid =	BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x6a3a1404, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
+
+/* 6a3a1405-5bd7-440d-b610-8019d41aa7f9	*/
+static const struct	bt_uuid_128	vnd_signed_uuid	= BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x6a3a1405, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
+
+/* 6a3a1406-5bd7-440d-b610-8019d41aa7f9	*/
+static const struct	bt_uuid_128	vnd_write_cmd_uuid = BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x6a3a1406, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9));
 
 static uint8_t vnd_value[] = { 'V',	'e', 'n', 'd', 'o',	'r'	};
 
+static uint8_t simulate_vnd;
+static uint8_t indicating;
+static struct bt_gatt_indicate_params ind_params;
+#define	MAX_DATA 74
+static uint8_t vnd_long_value[]	= {
+		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '1',
+		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '2',
+		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '3',
+		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '4',
+		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '5',
+		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '6',
+		  '.', ' ' };
 
 /*
  * Local Functions
@@ -96,9 +125,6 @@ static ssize_t write_vnd(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 	return len;
 }
 
-static uint8_t simulate_vnd;
-static uint8_t indicating;
-static struct bt_gatt_indicate_params ind_params;
 
 static void	vnd_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
@@ -117,15 +143,6 @@ static void	indicate_destroy(struct	bt_gatt_indicate_params	*params)
 	indicating = 0U;
 }
 
-#define	MAX_DATA 74
-static uint8_t vnd_long_value[]	= {
-		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '1',
-		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '2',
-		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '3',
-		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '4',
-		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '5',
-		  'V', 'e',	'n', 'd', 'o', 'r',	' ', 'd', 'a', 't',	'a', '6',
-		  '.', ' ' };
 
 static ssize_t read_long_vnd(struct	bt_conn	*conn,
 				 const struct bt_gatt_attr *attr, void *buf,
@@ -156,9 +173,6 @@ static ssize_t write_long_vnd(struct bt_conn *conn,
 	return len;
 }
 
-static const struct	bt_uuid_128	vnd_long_uuid =	BT_UUID_INIT_128(
-	0xf3, 0xde,	0xbc, 0x9a,	0x78, 0x56,	0x34, 0x12,
-	0x78, 0x56,	0x34, 0x12,	0x78, 0x56,	0x34, 0x12);
 
 static struct bt_gatt_cep vnd_long_cep = {
 	.properties	= BT_GATT_CEP_RELIABLE_WRITE,
@@ -190,13 +204,6 @@ static ssize_t write_signed(struct bt_conn *conn, const	struct bt_gatt_attr	*att
 	return len;
 }
 
-static const struct	bt_uuid_128	vnd_signed_uuid	= BT_UUID_INIT_128(
-	0xf3, 0xde,	0xbc, 0x9a,	0x78, 0x56,	0x34, 0x13,
-	0x78, 0x56,	0x34, 0x12,	0x78, 0x56,	0x34, 0x13);
-
-static const struct	bt_uuid_128	vnd_write_cmd_uuid = BT_UUID_INIT_128(
-	0xf4, 0xde,	0xbc, 0x9a,	0x78, 0x56,	0x34, 0x12,
-	0x78, 0x56,	0x34, 0x12,	0x78, 0x56,	0x34, 0x12);
 
 static ssize_t write_without_rsp_vnd(struct	bt_conn	*conn,
 					 const struct bt_gatt_attr *attr,
@@ -223,7 +230,7 @@ static ssize_t write_without_rsp_vnd(struct	bt_conn	*conn,
 
 /* Vendor Primary Service Declaration */
 BT_GATT_SERVICE_DEFINE(vnd_svc,
-	BT_GATT_PRIMARY_SERVICE(&vnd_uuid),
+	BT_GATT_PRIMARY_SERVICE(&vnd_service_uuid),
 	BT_GATT_CHARACTERISTIC(&vnd_enc_uuid.uuid,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE |
 				   BT_GATT_CHRC_INDICATE,
@@ -260,8 +267,7 @@ static const struct	bt_data	ad[] = {
 			  BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
 			  BT_UUID_16_ENCODE(BT_UUID_CTS_VAL)),
 	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
-			  0xf0,	0xde, 0xbc,	0x9a, 0x78,	0x56, 0x34,	0x12,
-			  0x78,	0x56, 0x34,	0x12, 0x78,	0x56, 0x34,	0x12),
+	BT_UUID_128_ENCODE(0x6a3a1400, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9))
 };
 
 static void	connected(struct bt_conn *conn,	uint8_t	err)
@@ -326,30 +332,6 @@ static struct bt_conn_auth_cb auth_cb_display =	{
 	.cancel	= auth_cancel,
 };
 
-static void	bas_notify(void)
-{
-	uint8_t	battery_level =	bt_bas_get_battery_level();
-
-	battery_level--;
-
-	if (!battery_level)	{
-		battery_level =	100U;
-	}
-
-	bt_bas_set_battery_level(battery_level);
-}
-static void	hrs_notify(void)
-{
-	static uint8_t heartrate = 90U;
-
-	/* Heartrate measurements simulation */
-	heartrate++;
-	if (heartrate == 160U) {
-		heartrate =	90U;
-	}
-
-	bt_hrs_notify(heartrate);
-}
 
 /*
  * Public Functions
@@ -377,13 +359,6 @@ void bt_thread(void	*p1, void	*p2, void *p3)
 	while (1) 
 	{
 		k_sleep(K_MSEC(1000));
-
-		/* Current Time	Service	updates	only when time is changed */
-//		cts_notify();
-		/* Heartrate measurements simulation */
-//		hrs_notify();
-		/* Battery level simulation	*/
-//		bas_notify();
 
 		/* Vendor indication simulation	*/
 			if (indicating)	

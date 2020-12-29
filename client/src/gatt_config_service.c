@@ -193,57 +193,46 @@ static ssize_t save_configuration_characteristic
  */
 
 /* Custom Service Variables	*/
-/* f2101400-b6e0-4617-810a-3934b3b43a39	*/
+/*	   xxxx								*/
+/* 1ff71400-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gc_gatt_config_service_uuid  = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101400, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71400, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
 /*
  * Characteristics UUID
  */
-/* f2101401-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71401-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_app_skey_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101401, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71401, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101402-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71402-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_nwk_skey_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101402, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71402, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101403-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71403-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_app_eui_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101403, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71403, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101404-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71404-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_app_key_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101404, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71404, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101405-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71405-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_join_eui_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101405, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71405, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101406-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71406-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_dev_eui_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101406, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71406, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101407-b6e0-4617-810a-3934b3b43a39	*/
+/* 1ff71407-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_lora_mode_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101407, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71407, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/* f2101408-b6e0-4617-810a-3934b3b43a39	*/
+/* 11ff71408-addc-49da-8bb2-a7026e65426d	*/
 static struct bt_uuid_128 gatt_save_configuration_characteristic_uuid	 = BT_UUID_INIT_128(
-	BT_UUID_128_ENCODE(0xf2101408, 0xb6e0, 0x4617, 0x810a, 0x3934b3b43a39));
+	BT_UUID_128_ENCODE(0x1ff71408, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
-/*
- * Characteristic Variables	(moved to vars.c soon)
- */
-//static uint8_t		app_skey[APP_SKEY_MAX_SZ];
-//static uint8_t		nwk_skey[NWK_SKEY_MAX_SZ];
-//static uint8_t		app_eui[DEV_EUI_MAX_SZ];
-
-//static uint8_t		app_key[APP_KEY_MAX_SZ];
-//static uint8_t		join_eui[JOIN_EUI_MAX_SZ];
-//static uint8_t		dev_eui[DEV_EUI_MAX_SZ];
-
-static uint8_t		lora_mode;
 
 BT_GATT_SERVICE_DEFINE(config_svc,
 	BT_GATT_PRIMARY_SERVICE(&gc_gatt_config_service_uuid),
@@ -473,7 +462,7 @@ static ssize_t read_lora_mode(struct	bt_conn	*conn, const struct	bt_gatt_attr *a
 	const char *value =	attr->user_data;
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(lora_mode));
+				 sizeof(var_lora_mode));
 }
 
 static ssize_t write_lora_mode(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
@@ -482,7 +471,7 @@ static ssize_t write_lora_mode(struct bt_conn *conn,	const struct bt_gatt_attr *
 {
 	uint8_t	*value = attr->user_data;
 
-	if (offset + len > sizeof(lora_mode))	{
+	if (offset + len > sizeof(var_lora_mode))	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 

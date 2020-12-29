@@ -59,7 +59,7 @@ LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
 #define	MAX_TX_DATA_LEN	10
 #define	MAX_RX_DATA_LEN	255
-#define	TX_CW
+//#define	TX_CW
 
 /*
  * Module Variables.
@@ -125,7 +125,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	}
 #if	defined(TX_CW)
 	// Start continuous	wave transmission function expires after 65535 seconds
-//	lora_test_cw(lora_dev, config.frequency, config.tx_power,	65535);
+	lora_test_cw(lora_dev, config.frequency, config.tx_power,	65535);
 
 	while(1) {
 		LOG_INF("Continuous	Wave Tx	active.");

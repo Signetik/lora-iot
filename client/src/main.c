@@ -17,7 +17,7 @@
 void main(void)
 {
 	
-//	vars_init();
+	vars_init();
 
 	
 	// Start RTOS task threads.

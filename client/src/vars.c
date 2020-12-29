@@ -21,8 +21,6 @@
 #include <stdbool.h>
 #endif
 
-//#include "LTE_task.h"
-#//include "gps_task.h"
 #include "vars.h"
 
 LOG_MODULE_REGISTER(vars, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
@@ -46,9 +44,6 @@ void* reboot(void*);
 void* sensor_enable(void);
 
 ///	GPS	API
-void* gps_enable(void);
-void* gps_configure(void);
-void* gps_read(void);
 
 static int vars_flash_init(void);
 static int vars_flash_read(int id, void	*buffer, int buf_sz);
@@ -281,7 +276,7 @@ static struct key_setget_s setget[]	= {
 	{"subtopic5", vtype_str, vdir_readwrite, &var_subtopic5, NULL, NULL, id_none},
 	{"pubtopic", vtype_str,	vdir_readwrite,	&var_pubtopic, NULL, NULL, id_none},
 	{"qos",	vtype_uint8, vdir_readwrite, &var_qos, NULL, NULL, id_none},
-	{"keepalive", vtype_uint16,	vdir_readwrite,	&var_keepalive,	NULL, NULL,	id_none},
+//	{"keepalive", vtype_uint16,	vdir_readwrite,	&var_keepalive,	NULL, NULL,	id_none},
 	{"devid_gen", vtype_uint32,	vdir_read, &var_device_id, NULL, NULL, id_none},
 	//{"connection_retry_interval",	vtype_uint16, vdir_readwrite, &var_retry_interval, NULL, NULL},
 	{"firmware", vtype_str,	vdir_read, &var_firmware, NULL,	NULL, id_none},
@@ -296,36 +291,36 @@ static struct key_setget_s setget[]	= {
 //	{"cell_mode", vtype_str, vdir_read,	NULL, NULL,	(getter)LTE_get_mode, id_none},
 	{"proto", vtype_str, vdir_readwrite, &var_proto, NULL, NULL, id_proto},
 	{"enabled",	vtype_boolean, vdir_readwrite, &var_enabled, NULL, NULL, id_none},
-	{"sensor_poll",	vtype_boolean, vdir_readwrite, &var_sensor_poll, (setter)sensor_enable,	NULL, id_none},
+//les	{"sensor_poll",	vtype_boolean, vdir_readwrite, &var_sensor_poll, (setter)sensor_enable,	NULL, id_none},
 	{"sensor", vtype_str, vdir_readwrite, &var_sensor, NULL, id_none},
 	{"sensor_board", vtype_str,	vdir_readwrite,	&var_sensor_board, NULL, id_none},
-	{"imei", vtype_str,	vdir_read, &var_imei, NULL,	NULL, id_none},
-	{"imsi", vtype_str,	vdir_read, NULL, NULL, (getter)imsi_read, id_none},
-	{"iccid", vtype_str, vdir_read,	NULL, NULL,	(getter)iccid_read,	id_none},
-	{"nbiot", vtype_boolean, vdir_readwrite, &var_nbiot, NULL, NULL, id_nbiot},
+//	{"imei", vtype_str,	vdir_read, &var_imei, NULL,	NULL, id_none},
+//	{"imsi", vtype_str,	vdir_read, NULL, NULL, (getter)imsi_read, id_none},
+//	{"iccid", vtype_str, vdir_read,	NULL, NULL,	(getter)iccid_read,	id_none},
+//	{"nbiot", vtype_boolean, vdir_readwrite, &var_nbiot, NULL, NULL, id_nbiot},
 //	{"time", vtype_str,	vdir_read, NULL, NULL, (getter)LTE_get_time, id_none},
 	{"leds", vtype_boolean,	vdir_readwrite,	&var_leds, NULL, NULL, id_none},
-	{"queue1", vtype_str, vdir_readwrite, &var_report[0], (setter)sigconfig_set_report_names, NULL,	id_queue1},
-	{"queue2", vtype_str, vdir_readwrite, &var_report[1], (setter)sigconfig_set_report_names, NULL,	id_queue2},
-	{"queue3", vtype_str, vdir_readwrite, &var_report[2], (setter)sigconfig_set_report_names, NULL,	id_queue3},
-	{"queue4", vtype_str, vdir_readwrite, &var_report[3], (setter)sigconfig_set_report_names, NULL,	id_queue4},
-	{"queue5", vtype_str, vdir_readwrite, &var_report[4], (setter)sigconfig_set_report_names, NULL,	id_queue5},
+//	{"queue1", vtype_str, vdir_readwrite, &var_report[0], (setter)sigconfig_set_report_names, NULL,	id_queue1},
+//	{"queue2", vtype_str, vdir_readwrite, &var_report[1], (setter)sigconfig_set_report_names, NULL,	id_queue2},
+//	{"queue3", vtype_str, vdir_readwrite, &var_report[2], (setter)sigconfig_set_report_names, NULL,	id_queue3},
+//	{"queue4", vtype_str, vdir_readwrite, &var_report[3], (setter)sigconfig_set_report_names, NULL,	id_queue4},
+//	{"queue5", vtype_str, vdir_readwrite, &var_report[4], (setter)sigconfig_set_report_names, NULL,	id_queue5},
 	{"connretry", vtype_uint16,	vdir_readwrite,	&var_connretry,	NULL, NULL,	id_none},
-	{"cacert", vtype_str, vdir_readwrite, NULL,	(setter)cacert_write, (getter)cacert_read, id_none},
-	{"privcert", vtype_str,	vdir_readwrite,	NULL, (setter)privcert_write, (getter)privcert_read, id_none},
-	{"privkey",	vtype_str, vdir_readwrite, NULL, (setter)privkey_write,	(getter)privkey_read, id_none},
+//	{"cacert", vtype_str, vdir_readwrite, NULL,	(setter)cacert_write, (getter)cacert_read, id_none},
+//	{"privcert", vtype_str,	vdir_readwrite,	NULL, (setter)privcert_write, (getter)privcert_read, id_none},
+//	{"privkey",	vtype_str, vdir_readwrite, NULL, (setter)privkey_write,	(getter)privkey_read, id_none},
 	{"sectag", vtype_uint16, vdir_readwrite, &var_sectag, NULL,	NULL, id_none},
 	{"sectagq",	vtype_uint16, vdir_readwrite, &var_sectagquery,	NULL, NULL,	id_none},
 	{"fotahost", vtype_str,	vdir_readwrite,	&var_fotahost, NULL, NULL, id_fotahost},
 	{"fotahostname", vtype_str,	vdir_readwrite,	&var_fotahostname, NULL, NULL, id_fotahostname},
 	{"fotafile", vtype_str,	vdir_readwrite,	&var_fotafile, NULL, NULL, id_none},
 	{"fotasubfile",	vtype_str, vdir_readwrite, &var_fotafile, NULL,	NULL, id_none},
-	{"fotastart", vtype_boolean, vdir_write, NULL, (setter)fota_start, NULL, id_none},
-	{"fotasubstart", vtype_boolean,	vdir_write,	NULL, (setter)fotasub_start, NULL, id_none},
+//	{"fotastart", vtype_boolean, vdir_write, NULL, (setter)fota_start, NULL, id_none},
+//	{"fotasubstart", vtype_boolean,	vdir_write,	NULL, (setter)fotasub_start, NULL, id_none},
 	{"fotastate", vtype_uint16,	vdir_read, &var_fotastate, NULL, NULL, id_none},
 	{"fotasubstate", vtype_uint16, vdir_read, &var_fotasubstate, NULL, NULL, id_none},
 	{"fotasectag", vtype_uint16, vdir_readwrite, &var_fotasectag, NULL,	NULL, id_none},
-	{"fotasuback", vtype_boolean, vdir_write, NULL,	(setter)fotasuback_set,	NULL, id_none},
+//	{"fotasuback", vtype_boolean, vdir_write, NULL,	(setter)fotasuback_set,	NULL, id_none},
 	{"dlcount",	vtype_uint16, vdir_read, &var_dlcount, NULL, NULL, id_none},
 	{"dlchunks", vtype_uint16, vdir_readwrite, &var_dlchunks, NULL,	NULL, id_none},
 	{"dloffset", vtype_uint32, vdir_readwrite, &var_dloffset, NULL,	NULL, id_none},
@@ -334,7 +329,7 @@ static struct key_setget_s setget[]	= {
 	{"fwupdate", vtype_boolean,	vdir_readwrite,	&var_fwupdate, NULL, NULL, id_none},
 	{"devtype",	vtype_str, vdir_readwrite, &var_devtype, NULL, NULL, id_devtype},
 	{"polltimeout",	vtype_uint16, vdir_readwrite, &var_polltimeout,	NULL, NULL,	id_none},
-	{"at", vtype_str, vdir_write, NULL,	(setter)at_set,	NULL, id_none},
+//	{"at", vtype_str, vdir_write, NULL,	(setter)at_set,	NULL, id_none},
 	{"reboot", vtype_boolean, vdir_write, NULL,	(setter)reboot,	NULL, id_none},
 	{"save", vtype_boolean,	vdir_readwrite,	NULL, (setter)flash_save, (getter)flash_load, id_none},
 
@@ -350,11 +345,11 @@ static struct key_setget_s setget[]	= {
 	{"app_key",	vtype_str, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
 
 	// GPS API (TODO: C.Lawson -- Finish!)
-	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},
+//	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},
 	{"gpsenabled",	vtype_boolean, vdir_read,	   &var_gpsenabled,	 NULL, NULL, id_none},
 	{"gpsinterval",	vtype_uint16,  vdir_readwrite, &var_gpsinterval, NULL, NULL, id_none},
 	{"gpsreport",	vtype_str,	   vdir_readwrite, &var_gpsreport,	 NULL, NULL, id_none}, // Support string of	report fields (pos,	date, time,	etc.)
-	{"gps",			vtype_boolean, vdir_read,	   &var_gps,		 NULL, (getter)gps_read, id_none},
+//	{"gps",			vtype_boolean, vdir_read,	   &var_gps,		 NULL, (getter)gps_read, id_none},
 	{"gpspos",		vtype_boolean, vdir_read,	   &var_gpspos,		 NULL, NULL, id_none},
 	{"gpsdate",		vtype_boolean, vdir_read,	   &var_gpsdate,	 NULL, NULL, id_none},
 	{"gpstime",		vtype_boolean, vdir_read,	   &var_gpstime,	 NULL, NULL, id_none},
@@ -709,124 +704,6 @@ enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 	return 0;
 }
 
-void* cacert_write(void* cert)
-{
-	char* result;
-
-	result = LTE_set_certificate(var_sectagquery, 0, cert);
-
-	return result;
-}
-
-void* privcert_write(void* cert)
-{
-	char* result;
-
-	result = LTE_set_certificate(var_sectagquery, 1, cert);
-
-	return result;
-}
-
-void* privkey_write(void* cert)
-{
-	char* result;
-
-	result = LTE_set_certificate(var_sectagquery, 2, cert);
-
-	return result;
-}
-
-void* cacert_read(void)
-{
-	char* result;
-
-	result = LTE_get_certificate(var_sectagquery, 0);
-
-	return result;
-}
-
-void* privcert_read(void)
-{
-	char* result;
-
-	result = LTE_get_certificate(var_sectagquery, 1);
-
-	return result;
-}
-
-void* privkey_read(void)
-{
-	char* result;
-
-	result = LTE_get_certificate(var_sectagquery, 2);
-
-	return result;
-}
-
-void* fota_start(void *var)
-{
-	if (var_fotastate == 0)	{
-		var_fotastate =	1;
-		return "1";
-	}
-	return "0";
-}
-
-void* fotasub_start(void *var) {
-	if (var_fotasubstate ==	0) {
-		var_fotasubstate = 1;
-		return "1";
-	}
-	return "0";
-}
-
-void* imsi_read(void)
-{
-	char *result;
-
-	result = LTE_get_imsi();
-
-	return result;
-}
-
-void* iccid_read(void)
-{
-	char *result;
-	int	index;
-
-	result = LTE_get_iccid();
-
-	if (strlen(result) > 2)	{
-		for	(index = 0 ; index < strlen(result)	; index	+= 2) {
-			result[index] ^= result[index+1];
-			result[index+1]	^= result[index];
-			result[index] ^= result[index+1];
-		}
-	}
-
-	return result;
-}
-
-void* fotasuback_set(void* arg)
-{
-	if (lte_fotasuback() ==	0) {
-		return "1";
-	}
-
-	return "0";
-}
-
-void* at_set(void* arg)
-{
-	char *p	= (char*)arg;
-	if (p[0] ==	'"') {
-		p++;
-		if (p[strlen(p)-1] == '"') {
-			p[strlen(p)-1] = 0;
-		}
-	}
-	return LTE_at(p);
-}
 
 void* reboot(void *unused)
 {
@@ -839,6 +716,7 @@ void* reboot(void *unused)
  ****************************************/
 
 ///	Enable / Disable sensor	polling.
+#if	0
 void* sensor_enable(void)
 {
 	LOG_DBG("Var: Sensor polling Enabled = %d\r\n",	var_sensor_poll);
@@ -847,33 +725,7 @@ void* sensor_enable(void)
 
 	return result;
 }
-
+#endif
 /****************************************
  *			 GPS API Commands			*
  ****************************************/
-
-///	Enable / Disable GPS.
-void* gps_enable(void)
-{
-	LOG_DBG("Var: GPS Enabled =	%d\r\n", var_gpsenabled);
-
-	char *result = GPS_enable_gps(var_gpsenabled);
-
-	return result;
-}
-
-///	Configure GPS.
-void* gps_configure(void)
-{
-	char *result = GPS_configure_gps();
-
-	return result;
-}
-
-///	Get	GPS	data.
-void* gps_read(void)
-{
-	char *result = GPS_get_gps();
-
-	return result;
-}
