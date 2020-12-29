@@ -12,12 +12,14 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include <lorawan/lorawan.h>
+#include <device.h>
 #include <zephyr.h>
-#include <net/coap.h>
-#include <net/sntp.h>
-#include <net/socket.h>
-#include <fcntl.h>
+
+//#include <net/coap.h>
+//#include <net/sntp.h>
+//#include <net/socket.h>
+//#include <fcntl.h>
 //#include <lte_lc.h>
 //#include <at_cmd.h>
 #include <drivers/gpio.h>
@@ -32,12 +34,7 @@
 #include "signetik.h"
 //#include "wdt_task.h"
 #include "lora_task.h"
-//#include "lwm2m_handler.h"
-//#include "transports/signetik_coap.h"
-//#include "transports/signetik_mqtt.h"
-//#include "fota_download.h"
 #include "vars.h"
-//#include "cell_packet.h"
 //#include "coap_cbor_device.h"
 
 /*
@@ -50,7 +47,7 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE,	okay),
 #define	DEFAULT_RADIO DT_LABEL(DEFAULT_RADIO_NODE)
 
 
-LOG_MODULE_REGISTER(loratask, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
+LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
 /*
  * Module Defines
@@ -98,11 +95,11 @@ void lora_thread(void *p1, void	*p2, void *p3)
 			dummy  /* app_eui */
 		},
 		.dev_eui = dummy,
-		.mode = LORAWAN_ACT_ABP
+		.mode =	LORAWAN_ACT_ABP
 	};
 	lorawan_join(&lw_config);
 	while (1) {
-		lorawan_send(1, "AB", 2, 0 /*LORAWAN_MSG_CONFIRMED*/);
+		lorawan_send(1,	"AB", 2, 0 /*LORAWAN_MSG_CONFIRMED*/);
 		k_sleep(K_MSEC(1000));
 	}
 #endif
@@ -128,7 +125,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	}
 #if	defined(TX_CW)
 	// Start continuous	wave transmission function expires after 65535 seconds
-	lora_test_cw(lora_dev, config.frequency, config.tx_power,	65535);
+//	lora_test_cw(lora_dev, config.frequency, config.tx_power,	65535);
 
 	while(1) {
 		LOG_INF("Continuous	Wave Tx	active.");
@@ -145,9 +142,9 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 
 		/* Block until data	arrives	or 5 seconds	passes */
-		int16_t rssi;
+		int16_t	rssi;
 		int8_t snr;
-		int len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000),
+		int	len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000),
 				&rssi, &snr);
 
 		if (len	< 0) {

@@ -25,19 +25,23 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
+#include <bluetooth/services/bas.h>
+#include <bluetooth/services/hrs.h>
+
 #include <logging/log.h>
 
 #include "signetik.h"
 //#include "wdt_task.h"
 #include "bt_task.h"
 #include "vars.h"
+//#include "cts.h"
 
 /*
  * Extract devicetree configuration.
  */
 
 
-//LOG_MODULE_REGISTER(bt_task,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
+LOG_MODULE_REGISTER(bt_task,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
 /*
  * Module Defines
@@ -251,6 +255,10 @@ BT_GATT_SERVICE_DEFINE(vnd_svc,
 
 static const struct	bt_data	ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
+			  BT_UUID_16_ENCODE(BT_UUID_HRS_VAL),
+			  BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
+			  BT_UUID_16_ENCODE(BT_UUID_CTS_VAL)),
 	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
 			  0xf0,	0xde, 0xbc,	0x9a, 0x78,	0x56, 0x34,	0x12,
 			  0x78,	0x56, 0x34,	0x12, 0x78,	0x56, 0x34,	0x12),
@@ -318,6 +326,30 @@ static struct bt_conn_auth_cb auth_cb_display =	{
 	.cancel	= auth_cancel,
 };
 
+static void	bas_notify(void)
+{
+	uint8_t	battery_level =	bt_bas_get_battery_level();
+
+	battery_level--;
+
+	if (!battery_level)	{
+		battery_level =	100U;
+	}
+
+	bt_bas_set_battery_level(battery_level);
+}
+static void	hrs_notify(void)
+{
+	static uint8_t heartrate = 90U;
+
+	/* Heartrate measurements simulation */
+	heartrate++;
+	if (heartrate == 160U) {
+		heartrate =	90U;
+	}
+
+	bt_hrs_notify(heartrate);
+}
 
 /*
  * Public Functions
@@ -344,11 +376,16 @@ void bt_thread(void	*p1, void	*p2, void *p3)
 	 */
 	while (1) 
 	{
-		k_sleep(K_SECONDS(1));
+		k_sleep(K_MSEC(1000));
+
+		/* Current Time	Service	updates	only when time is changed */
+//		cts_notify();
+		/* Heartrate measurements simulation */
+//		hrs_notify();
+		/* Battery level simulation	*/
+//		bas_notify();
 
 		/* Vendor indication simulation	*/
-		if (simulate_vnd) 
-		{
 			if (indicating)	
 			{
 				continue;
@@ -364,7 +401,7 @@ void bt_thread(void	*p1, void	*p2, void *p3)
 			{
 				indicating = 1U;
 			}
-		}
+	
 	}
 }
 

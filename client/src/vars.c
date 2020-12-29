@@ -107,8 +107,7 @@ bool var_enabled	= false;
 bool var_sensor_poll	= false;
 bool var_nbiot		= false;
 bool var_binary		= false;
-// LES bool	var_leds		= true;
-bool var_leds		= false;
+bool var_leds		= true;
 
 // Report Names
 uint8_t	report[VAR_MAX_REPORTS][VAR_REPORT_NAME_SIZE] =	{
@@ -127,6 +126,15 @@ struct var_str_s var_report[VAR_MAX_REPORTS] = {
 	{ report[3], 7,	VAR_REPORT_NAME_SIZE },
 	{ report[4], 7,	VAR_REPORT_NAME_SIZE },
 };
+
+// LoRa	Vars
+uint8_t	 var_lora_mode = 0;
+VAR_STR_CREATE(lora_app_skey, 8, "");
+VAR_STR_CREATE(lora_nwk_skey, 8, "");
+VAR_STR_CREATE(lora_app_eui, 16, "");
+VAR_STR_CREATE(lora_dev_eui, 8,	"");
+VAR_STR_CREATE(lora_join_eui, 8, "");
+VAR_STR_CREATE(lora_app_key, 16, "");
 
 // GPS Vars
 uint16_t var_gpsinterval =	0;
@@ -237,6 +245,13 @@ enum var_save_id {
 	id_queue3		= 13,
 	id_queue4		= 14,
 	id_queue5		= 15,
+	id_loramode,
+	id_appskey,
+	id_nwkskey,
+	id_appeui,
+	id_deveui,
+	id_joineui,
+	id_appkey
 };
 
 struct key_setget_s	{
@@ -322,6 +337,17 @@ static struct key_setget_s setget[]	= {
 	{"at", vtype_str, vdir_write, NULL,	(setter)at_set,	NULL, id_none},
 	{"reboot", vtype_boolean, vdir_write, NULL,	(setter)reboot,	NULL, id_none},
 	{"save", vtype_boolean,	vdir_readwrite,	NULL, (setter)flash_save, (getter)flash_load, id_none},
+
+	{"loramode",	vtype_uint8,  vdir_readwrite, &var_lora_mode, NULL,	NULL, id_loramode},
+	// LoRa	ABP
+	{"app_skey",	vtype_str, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
+	{"nwk_skey", vtype_str,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
+	{"app_eui",	vtype_str, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
+
+	// LoRa	OTAA
+	{"dev_eui",	vtype_str, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
+	{"join_eui", vtype_str,	vdir_readwrite,	&var_lora_join_eui,	NULL, NULL,	id_joineui},
+	{"app_key",	vtype_str, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
 
 	// GPS API (TODO: C.Lawson -- Finish!)
 	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},

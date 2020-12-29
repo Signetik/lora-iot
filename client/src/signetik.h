@@ -7,10 +7,10 @@
  *============================================================================*/
 
 #define	LORA_STACKSIZE		1024
-#define	LORA_PRIORITY		   2
+#define	LORA_PRIORITY		   4
 
 #define	UART_STACKSIZE		1024
-#define	UART_PRIORITY		   2
+#define	UART_PRIORITY		   3
 
 #define	BT_STACKSIZE		1024
 #define	BT_PRIORITY			   2

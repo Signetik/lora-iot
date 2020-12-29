@@ -15,7 +15,7 @@ project(client)
 set(sources
 	src/main.c
 #	src/uart_task.c
-#	src/vars.c
+	src/vars.c
 #	src/wdt_task.c
 #	src/sigconfig.c
 #	src/cbor.c
@@ -25,6 +25,7 @@ set(sources
 	src/LoRa_task.c
 	src/led_task.c
 	src/bt_task.c
+#	src/cts.c
 	src/gatt_config_service.c
 #	src/modem-api/modem_interface_api.c
 )
