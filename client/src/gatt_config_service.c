@@ -244,7 +244,7 @@ static struct bt_uuid_128 gatt_save_configuration_characteristic_uuid	 = BT_UUID
 //static uint8_t		dev_eui[DEV_EUI_MAX_SZ];
 
 static uint8_t		lora_mode;
-/*
+
 BT_GATT_SERVICE_DEFINE(config_svc,
 	BT_GATT_PRIMARY_SERVICE(&gc_gatt_config_service_uuid),
 	BT_GATT_CHARACTERISTIC(&gatt_app_skey_characteristic_uuid.uuid,
@@ -298,7 +298,6 @@ BT_GATT_SERVICE_DEFINE(config_svc,
 	BT_GATT_CCC(config_ccc_cfg_changed,
 			BT_GATT_PERM_READ |	BT_GATT_PERM_WRITE)
 );
-*/
 
 /*
  * Constants
