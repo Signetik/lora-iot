@@ -90,8 +90,8 @@ void led_thread(void *p1, void *p2,	void *p3)
 	static led_msg_t led_msg = {
 		.red = false,
 		.green = false,
-		.blue = true,
-		.enable = true
+		.blue =	true,
+		.enable	= true
 	};
 
 	led_r =	device_get_binding(LEDR_LABEL);
@@ -111,7 +111,12 @@ void led_thread(void *p1, void *p2,	void *p3)
 		gpio_pin_set(led_b,	LEDB_PIN,	led_msg.blue);
 		gpio_pin_set(led_en, LEDEN_PIN,	led_msg.enable);
 
-		k_msgq_get(&led_msgq, &led_msg,	K_FOREVER);
+		k_sleep(K_MSEC(1000));
+
+		led_msg.blue = led_msg.red;
+		led_msg.red	= !led_msg.red;
+
+	//	k_msgq_get(&led_msgq, &led_msg,	K_FOREVER);
 	}
 }
 

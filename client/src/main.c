@@ -12,6 +12,7 @@
 #include "led_task.h"
 #include "bt_task.h"
 #include "lora_task.h"
+#include "vars.h"
 
 
 void main(void)
