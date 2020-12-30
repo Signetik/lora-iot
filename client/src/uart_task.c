@@ -57,6 +57,7 @@ union ms_s
 } ms;
 
 static struct modem_state_s	*modem_state = (struct modem_state_s *)&ms;
+
 #if	defined(MODEM_FIFO)
 static bool	modem_state_initialized	= false;
 #endif
@@ -66,15 +67,17 @@ static struct modem_api_func *api =	NULL;
 void uart_thread(void *p1, void	*p2,	void *p3)
 {
 	struct device *uart;
-
+	
 //	sigconfig_init();
-
 	uart = device_get_binding("UART_1");
 	if (!uart)
 	{
 	printk("Cannot find	uart(%s)!\n", DEFAULT_UART);
 	return;
 	}
+
+// define uart_send	callback in	modem state.
+	modem_state->uart_send = uart_send;
 
 	tty_init(&tty, uart);
 	tty_set_rx_timeout(&tty, 10);
