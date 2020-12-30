@@ -1,3 +1,11 @@
+/*============================================================================*
+ *		   Copyright © 2019-2020 Signetik, LLC -- All Rights Reserved		  *
+ *----------------------------------------------------------------------------*
+ *																Signetik, LLC *
+ *															 www.signetik.com *
+ *										SPDX-License-Identifier: BSD-4-Clause *
+ *============================================================================*/
+
 /*
  * sigconfig.c
  *
@@ -12,28 +20,21 @@
 #include <drivers/uart.h>
 #include <drivers/gpio.h>
 #include <drivers/i2c.h>
-
 #include <stdlib.h>
+
 #include "sigconfig.h"
-//#include "LTE_task.h"
-//#include "main_task.h"
+//#include "tasks/sensor_reading/main_task.h"
 #include "signetik.h"
-//#include "temp_humidity_task.h"
 //#include "sensors/signetik_htu21d.h"
 
 #include "cbor.h"
 #include "coap.h"
-//#include "modbus.h"
+//#include "sensors/modbus.h"
 
 LOG_MODULE_REGISTER(sigconfig, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
-//u8_t make_i2c_transaction(int	index, struct i2c_action_s * action);
+static int64_t sigconfig_current_time =	0, sigconfig_real_time = 0;
 
-extern const k_tid_t sig_conf_id;
-
-static bool	sigconfig_data_ready;
-static int64_t sigconfig_current_time	= 0, sigconfig_real_time = 0;
-static int group_number	= -1;
 K_SEM_DEFINE(sem_sigconfig,	0, 1);
 K_SEM_DEFINE(sem_report_queue, 1, 1);
 
@@ -41,18 +42,7 @@ void sigconfig_start(int64_t current_time, int64_t real_time)
 {
 	sigconfig_current_time = current_time;
 	sigconfig_real_time	= real_time;
-	sigconfig_data_ready = false;
 	k_sem_give(&sem_sigconfig);
-}
-
-bool sigconfig_ready(void)
-{
-	return sigconfig_data_ready;
-}
-
-int	sigconfig_get_data(void)
-{
-	return group_number;
 }
 
 struct sigconfig_master_s sigcfg_master;
@@ -62,13 +52,12 @@ struct sigconfig_master_s sigcfg_master2;
 
 uint32_t get_next_action_time(void);
 
-uint32_t sigcfg_task_high_wm;
 volatile bool need_settings	= true;
 uint8_t	sigcfg_packet_space	[64];
-int	sig_conf_record_num	=  0;
-int	sig_conf_num_reports =	0;
 
+#if	defined(CONFIG_SENSOR_ADDON_MEMORY)
 static uint32_t	memory[256]	= {	0 };
+#endif
 
 extern int uart_send(uint8_t *buffer, int length);
 
@@ -78,20 +67,80 @@ uint32_t get_next_action_time(void)
 
 	for(uint8_t	i =	0; i < sigcfg_master.num_reports; i++)
 	{
-		if((sigcfg_master.reports[i].next_sample_time) < next_time )
+		if((sigcfg_master.reports[i].next_sample_time) < next_time ) {
 			next_time =	sigcfg_master.reports[i].next_sample_time;
+		}
 	}
 
 	return next_time;
 }
 
-void perform_actions(int index,	struct report_s	* p_group)
+void sigconfig_init(void)
 {
-	for(uint8_t	j =	0; j < p_group->num_fields;	j++)
-	{
+#ifndef	CONFIG_SENSOR_NONE
+	// TODO(David,SIGCELL-): Replace this with a less hacky	way	to check, and setup	structure for, sensors.
+	sigcfg_master.reports[0].fields[0].protocol	= I2C;	// Allows the first	perform_action() call to initialize	structure for sensors.
+#endif
+	sigcfg_master.num_reports =	VAR_MAX_REPORTS;
+	sigcfg_master.sequence = 1;
+	sigcfg_master.field_index =	0;
+	sigcfg_master.field_count =	0;
+	strcpy(sigcfg_master.product_type, var_devtype.data);
 
-		if(p_group->fields[j].protocol == MODBUS)
-		{
+	for	(int grp = 0 ; grp < sigcfg_master.num_reports ; grp++)	{
+		sigcfg_master.reports[grp].max_records = VAR_REPORT_QUEUE_SIZE;
+		strcpy(sigcfg_master.reports[grp].report_name, var_report[grp].data);
+		sigcfg_master.reports[grp].queue_count = 0;
+		sigcfg_master.reports[grp].queue_index = 0;
+		for	(int q = 0 ; q < VAR_REPORT_QUEUE_SIZE ; q++) {
+			sigcfg_master.reports[grp].num_fields[q] = 0;
+		}
+	}
+}
+
+bool sigconfig_execute(int64_t current_time, int64_t real_time)
+{
+	bool sigconfig_data_ready =	false;
+
+	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++) {
+		// Check report	queue is free to write to.
+		if (k_sem_take(&sem_report_queue, K_MSEC(100)) != 0) {
+			LOG_ERR("Group %d queue	busy. Data dropped.", grp);
+			uart_send("+notify,queue:busy\r\n",	0);
+			return sigconfig_data_ready;
+		}
+
+		int	index =	sigcfg_master.reports[grp].queue_index;
+		if (sigcfg_master.reports[grp].queue_count < VAR_MAX_REPORTS &&	!sigconfig_field_data_full()) {
+			if ((sigcfg_master.reports[grp].next_sample_time * 1000) <=	current_time) {
+				LOG_INF("Performing	action for group %d", grp);
+				
+				// Map static field	elements to	these report fields.
+				for	(int f=0; f<sigcfg_master.reports[grp].num_fields[index]; f++) {
+					sigcfg_master.reports[grp].fields[f].storage[index].size = MAX_FIELD_VAL_LEN;
+					sigcfg_master.reports[grp].fields[f].storage[index].data = field_data[sigcfg_master.field_index++];
+				}
+				
+				sigcfg_master.reports[grp].storage[index].ts_s = (uint32_t)(real_time /	1000);
+				sigcfg_master.reports[grp].storage[index].ts_ms	= (uint32_t)(real_time % 1000);
+				sigconfig_perform_actions(index, &sigcfg_master.reports[grp]);
+				sigcfg_master.reports[grp].next_sample_time	= (current_time	/ 1000)	+ sigcfg_master.reports[grp].sample_interval_s;
+				sigcfg_master.reports[grp].queue_index++;
+				sigcfg_master.reports[grp].queue_count++;
+				sigconfig_data_ready = true;
+			}
+		}
+
+		k_sem_give(&sem_report_queue);
+	}
+
+	return sigconfig_data_ready;
+}
+
+void sigconfig_perform_actions(int index, struct report_s *	p_group)
+{
+	for(uint8_t	j =	0; j < p_group->num_fields[p_group->queue_index]; j++) {
+		if(p_group->fields[j].protocol == MODBUS) {
 #if	defined(CONFIG_SENSOR_ADDON_MODBUS)
 			//configure_modbus_uart();
 			for(uint8_t	i =	0; i < p_group->fields[j].num_actions; i++)
@@ -105,35 +154,29 @@ void perform_actions(int index,	struct report_s	* p_group)
 			LOG_ERR("MODBUS	not	supported!");
 #endif
 		}
-		if(p_group->fields[j].protocol == I2C)
-		{
+		if(p_group->fields[j].protocol == I2C) {
 #if	defined(CONFIG_SENSOR_ADDON_LIGHT) || defined(CONFIG_SENSOR_ADDON_TEMPHUMID)
-			// configure_modbus_uart();
-
 			if (sensor_api)	{
 				int	res	= -1;
 				res	= sensor_api->fetch_sample(&sensor_state, p_group, j);
 				if (res	!= 0)  {
-					LOG_INF("Failed	to fetch sample.");
+					LOG_ERR("Failed	to fetch sample.");
 					k_sleep(1000);
 				}
 			}
 			else {
-				LOG_INF("Sensor	not	initialized.");
+				LOG_ERR("Sensor	not	initialized.");
 				k_sleep(1000);
 			}
-
-			// usart_reset(&usart_modbus_instance);	// reset the uart so we	can	configure it next time,	especially if settings change
 #else
-			LOG_ERR("MODBUS	not	supported!");
+			LOG_ERR("I2C not supported!");
 #endif
 		}
-		if(p_group->fields[j].protocol == MEMORY)
-		{
+		if(p_group->fields[j].protocol == MEMORY) {
+#if	defined(CONFIG_SENSOR_ADDON_MEMORY)
 			// TODO: Don't assume read
-			for(uint8_t	i =	0; i < p_group->fields[j].num_actions; i++)
-			{
-				uint16_t addr =	p_group->fields[j].action[i].memory.reg_addr;
+			for(uint8_t	i =	0; i < p_group->fields[j].num_actions; i++)	{
+				u16_t addr = p_group->fields[j].action[i].memory.reg_addr;
 
 				if (addr < sizeof(memory) /	sizeof(memory[0])) {
 					p_group->fields[j].action[i].memory.storage.data[index]	=
@@ -148,266 +191,11 @@ void perform_actions(int index,	struct report_s	* p_group)
 					-1;
 				}
 			}
-
-		}
-	}
-}
-
-#define	TESTING
-#if	defined(TESTING)
-#define	SENSOR_RATE	60
-#define	REPORT_RATE	120
 #else
-#define	SENSOR_RATE	60
-#define	REPORT_RATE	300
+			LOG_ERR("MEMORY	reading	not	supported!");
 #endif
-
-// IoT Sensor Configurations
-#ifdef CONFIG_SENSOR_ADDON_MODBUS
-// ABO
-#define	REPORT_GROUPS 32
-#endif
-#ifdef CONFIG_SENSOR_ADDON_TEMPHUMID
-#define	REPORT_GROUPS 1
-#endif
-#ifdef CONFIG_SENSOR_ADDON_LIGHT
-#define	REPORT_GROUPS 1
-#endif
-
-#define	MAX_FIELDS 5
-#define	MAX_RECORDS	(REPORT_RATE/SENSOR_RATE * 3)
-
-void sigconfig_init(void)
-{
-// TODO: Move this out of here
-#ifdef CONFIG_SENSOR_ADDON_MODBUS
-#define	DEVICE_ADDRESS 1
-
-	configure_modbus_uart();
-
-	memory[0] =	1;
-	memory[1] =	3;
-
-	strcpy(sigcfg_master.product_type, "BreweryMonitor");
-	sigcfg_master.num_reports =	REPORT_GROUPS;
-
-	uint16_t reg_addr_temperature =	1500;
-	uint16_t reg_addr_temperaturesp	= 1501;
-	uint16_t reg_addr_coilstatus = 1101;
-
-	for	(int grp = 0 ; grp < sigcfg_master.num_reports ; grp++)	{
-
-		strcpy(sigcfg_master.reports[grp].report_name, "TankStatistics");
-
-		sigcfg_master.reports[grp].sample_interval_s = SENSOR_RATE;
-		sigcfg_master.reports[grp].report_interval_s = REPORT_RATE;
-		sigcfg_master.reports[grp].next_sample_time	= 0;
-		sigcfg_master.reports[grp].max_records = MAX_RECORDS;
-		sigcfg_master.reports[grp].storage[0].ts_s = ts_s[grp];
-		sigcfg_master.reports[grp].storage[0].ts_ms	= ts_ms[grp];
-		sigcfg_master.reports[grp].num_fields =	5;
-
-		strcpy(sigcfg_master.reports[grp].fields[0].field_name,	"Temperature");
-		sigcfg_master.reports[grp].fields[0].protocol =	MODBUS;
-		sigcfg_master.reports[grp].fields[0].type =	CBOR_INT32;
-		sigcfg_master.reports[grp].fields[0].storage[0].size = sizeof(field_data[0][0][0]);
-		sigcfg_master.reports[grp].fields[0].storage[0].data = field_data[grp][0];
-		sigcfg_master.reports[grp].fields[0].num_actions = 1;
-		sigcfg_master.reports[grp].fields[0].action[0].modbus.slave_addr = DEVICE_ADDRESS;
-		sigcfg_master.reports[grp].fields[0].action[0].modbus.opcode = 0x03;
-		sigcfg_master.reports[grp].fields[0].action[0].modbus.reg_addr = reg_addr_temperature;
-		sigcfg_master.reports[grp].fields[0].action[0].modbus.num =	1;
-		sigcfg_master.reports[grp].fields[0].action[0].modbus.storage.data = sigcfg_master.reports[grp].fields[0].storage[0].data;
-		sigcfg_master.reports[grp].fields[0].action[0].modbus.storage.size = sigcfg_master.reports[grp].fields[0].storage[0].size;
-
-		strcpy(sigcfg_master.reports[grp].fields[1].field_name,	"TemperatureUnit");
-		sigcfg_master.reports[grp].fields[1].protocol =	MEMORY;
-		sigcfg_master.reports[grp].fields[1].type =	CBOR_INT32;
-		sigcfg_master.reports[grp].fields[1].storage[0].size = sizeof(field_data[0][0][0]);
-		sigcfg_master.reports[grp].fields[1].storage[0].data = field_data[grp][1];
-		sigcfg_master.reports[grp].fields[1].num_actions = 1;
-		sigcfg_master.reports[grp].fields[1].action[0].memory.reg_addr = 0x400;
-		sigcfg_master.reports[grp].fields[1].action[0].memory.storage.data = sigcfg_master.reports[grp].fields[1].storage[0].data;
-		sigcfg_master.reports[grp].fields[1].action[0].memory.storage.size = sigcfg_master.reports[grp].fields[1].storage[0].size;
-
-		strcpy(sigcfg_master.reports[grp].fields[2].field_name,	"Slot");
-		sigcfg_master.reports[grp].fields[2].protocol =	MEMORY;
-		sigcfg_master.reports[grp].fields[2].type =	CBOR_INT32;
-		sigcfg_master.reports[grp].fields[2].storage[0].size = sizeof(field_data[0][0][0]);
-		sigcfg_master.reports[grp].fields[2].storage[0].data = field_data[grp][2];
-		sigcfg_master.reports[grp].fields[2].num_actions = 1;
-		sigcfg_master.reports[grp].fields[2].action[0].memory.reg_addr = 0x401 + grp;
-		sigcfg_master.reports[grp].fields[2].action[0].memory.storage.data = sigcfg_master.reports[grp].fields[2].storage[0].data;
-		sigcfg_master.reports[grp].fields[2].action[0].memory.storage.size = sigcfg_master.reports[grp].fields[2].storage[0].size;
-
-		strcpy(sigcfg_master.reports[grp].fields[3].field_name,	"TemperatureSetPoint");
-		sigcfg_master.reports[grp].fields[3].protocol =	MODBUS;
-		sigcfg_master.reports[grp].fields[3].type =	CBOR_INT32;
-		sigcfg_master.reports[grp].fields[3].storage[0].size = sizeof(field_data[0][0][0]);
-		sigcfg_master.reports[grp].fields[3].storage[0].data = field_data[grp][3];
-		sigcfg_master.reports[grp].fields[3].num_actions = 1;
-		sigcfg_master.reports[grp].fields[3].action[0].modbus.slave_addr = DEVICE_ADDRESS;
-		sigcfg_master.reports[grp].fields[3].action[0].modbus.opcode = 0x03;
-		sigcfg_master.reports[grp].fields[3].action[0].modbus.reg_addr = reg_addr_temperaturesp;
-		sigcfg_master.reports[grp].fields[3].action[0].modbus.num =	1;
-		sigcfg_master.reports[grp].fields[3].action[0].modbus.storage.data = sigcfg_master.reports[grp].fields[3].storage[0].data;
-		sigcfg_master.reports[grp].fields[3].action[0].modbus.storage.size = sigcfg_master.reports[grp].fields[3].storage[0].size;
-
-		strcpy(sigcfg_master.reports[grp].fields[4].field_name,	"CoilStatus");
-		sigcfg_master.reports[grp].fields[4].protocol =	MODBUS;
-		sigcfg_master.reports[grp].fields[4].type =	CBOR_INT32;
-		sigcfg_master.reports[grp].fields[4].storage[0].size = sizeof(field_data[0][0][0]);
-		sigcfg_master.reports[grp].fields[4].storage[0].data = field_data[grp][4];
-		sigcfg_master.reports[grp].fields[4].num_actions = 1;
-		sigcfg_master.reports[grp].fields[4].action[0].modbus.slave_addr = DEVICE_ADDRESS;
-		sigcfg_master.reports[grp].fields[4].action[0].modbus.opcode = 0x01;
-		sigcfg_master.reports[grp].fields[4].action[0].modbus.reg_addr = reg_addr_coilstatus;
-		sigcfg_master.reports[grp].fields[4].action[0].modbus.num =	16;
-		sigcfg_master.reports[grp].fields[4].action[0].modbus.storage.data = sigcfg_master.reports[grp].fields[4].storage[0].data;
-		sigcfg_master.reports[grp].fields[4].action[0].modbus.storage.size = sigcfg_master.reports[grp].fields[4].storage[0].size;
-
-		reg_addr_temperature +=	10;
-		reg_addr_temperaturesp += 10;
-		reg_addr_coilstatus	+= 1;
-	}
-#endif
-
-#if	0
-	memory[0] =	1;
-	memory[1] =	3;
-
-	// TODO(SIGCELL-25,David): Set these to	an empty default value?
-
-	strcpy(sigcfg_master.product_type, "TempHumidLightSensor");
-	sigcfg_master.num_reports =	REPORT_GROUPS;
-
-	uint8_t	reg_addr_temperature = 0xf3;
-	uint8_t	reg_addr_humidity =	0xf5;
-
-	for	(int grp = 0 ; grp < sigcfg_master.num_reports ; grp++)	{
-
-		strcpy(sigcfg_master.reports[grp].report_name, "THL");
-
-		sigcfg_master.reports[grp].sample_interval_s = SENSOR_RATE;
-		sigcfg_master.reports[grp].report_interval_s = REPORT_RATE;
-		sigcfg_master.reports[grp].next_sample_time	= 0;
-		sigcfg_master.reports[grp].max_records = MAX_RECORDS;
-		sigcfg_master.reports[grp].storage[0].ts_s = ts_s[grp];
-		sigcfg_master.reports[grp].storage[0].ts_ms	= ts_ms[grp];
-		sigcfg_master.reports[grp].num_fields =	1;
-
-		strcpy(sigcfg_master.reports[grp].fields[0].field_name,	"Temperature");
-		sigcfg_master.reports[grp].fields[0].protocol =	I2C;
-		sigcfg_master.reports[grp].fields[0].type =	CBOR_INT32;
-		sigcfg_master.reports[grp].fields[0].storage[0].size = sizeof(field_data[0][0][0]);
-		sigcfg_master.reports[grp].fields[0].storage[0].data = field_data[grp][0];
-		sigcfg_master.reports[grp].fields[0].num_actions = 1;
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.slave_addr =	0x40;
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.bus_name	= "I2C_2";
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.reg_addr	= reg_addr_temperature;
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.wlen	= 1;
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.rlen	= 3;
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.storage.data	= sigcfg_master.reports[grp].fields[0].storage[0].data;
-		sigcfg_master.reports[grp].fields[0].action[0].i2c.storage.size	= sigcfg_master.reports[grp].fields[0].storage[0].size;
-	}
-#endif
-
-#ifndef	CONFIG_SENSOR_NONE
-	// TODO(David,SIGCELL-): Replace this with a less hacky	way	to check, and setup	structure for, sensors.
-	sigcfg_master.reports[0].fields[0].protocol	= I2C;	// Allows the first	perform_action() call to initialize	structure for sensors.
-#endif
-	sigcfg_master.num_reports =	VAR_MAX_REPORTS;
-	sigcfg_master.sequence = 1;
-	strcpy(sigcfg_master.product_type, var_devtype.data);
-
-	for	(int grp = 0 ; grp < sigcfg_master.num_reports ; grp++)	{
-
-		sigcfg_master.reports[grp].max_records = VAR_MAX_REPORTS;
-		sigcfg_master.reports[grp].num_fields =	VAR_MAX_FIELDS;
-		strcpy(sigcfg_master.reports[grp].report_name, var_report[grp].data);
-
-		for	(int q = 0 ; q < VAR_REPORT_QUEUE_SIZE ; q++) {
-			sigcfg_master.reports[grp].storage[q].ts_s = ts_s[grp][q];
-			sigcfg_master.reports[grp].storage[q].ts_ms	= ts_ms[grp][q];
-
-			for	(int f = 0 ; f < VAR_MAX_FIELDS	; f++) {
-				sigcfg_master.reports[grp].fields[f].storage[q].size = (uint8_t)sizeof(field_data[grp][f][q]);
-				sigcfg_master.reports[grp].fields[f].storage[q].data = field_data[grp][f][q];
-				sigcfg_master.reports[grp].fields[f].num_actions = 0;
-			}
 		}
 	}
-}
-
-void* sigconfig_set_report_names(void *value)
-{
-	for	(int grp = 0 ; grp < sigcfg_master.num_reports ; grp++)
-		strcpy(sigcfg_master.reports[grp].report_name, var_report[grp].data);
-	return NULL;
-}
-
-/*
-u8_t make_i2c_transaction(int index, struct	i2c_action_s * action)
-{
-	struct device *dev = device_get_binding(action->bus_name);
-	if (dev) {
-		u8_t readVal[3]	= {0};
-		u8_t sendbuf[2]	= {0};
-		int	i;
-
-		sendbuf[0] = action->reg_addr;
-
-		if (i2c_write(dev, sendbuf,	action->wlen, action->slave_addr) >= 0)	{
-		}
-	while (1) {	// TODO: Change	to 1 after I2C working
-		k_sleep(100);
-		if (i2c_read(dev, readVal, action->rlen, action->slave_addr) ==	0) {
-			break;
-		}
-		k_sleep(100); // TODO: add timeout
-	}
-	action->storage.data[0]	= 0;
-	for	( i	= 0	; i	< action->rlen ; i++ ) {
-//		action->storage.data[0]	= (action->storage.data[0] << 8) | readVal[i];
-		action->storage.data[i]	= readVal[i];
-	}
-}
-
-return 0;
-}
-*/
-bool sigconfig_execute(int64_t current_time, int64_t real_time)
-{
-	bool sigconfig_data_ready =	false;
-
-	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++)
-	{
-		// Check report	queue is free to write to
-		if (k_sem_take(&sem_report_queue, K_MSEC(100)) != 0) {
-			LOG_ERR("Group %d queue	busy. Data dropped.", grp);
-			uart_send("+notify,queue:busy\r\n",	0);
-			return sigconfig_data_ready;
-		}
-
-		int	index =	sigcfg_master.reports[grp].index;
-		if (index <	VAR_MAX_REPORTS) {
-			if ((sigcfg_master.reports[grp].next_sample_time * 1000) <=	current_time)
-			{
-				LOG_INF("Performing	action for group %d", grp);
-				sigcfg_master.reports[grp].storage[index].ts_s = (uint32_t)(real_time /	1000);
-				sigcfg_master.reports[grp].storage[index].ts_ms	= (uint32_t)(real_time % 1000);
-				perform_actions(index, &sigcfg_master.reports[grp]);
-				sigcfg_master.reports[grp].next_sample_time	= (current_time	/ 1000)	+ sigcfg_master.reports[grp].sample_interval_s;
-				sigcfg_master.reports[grp].index++;
-				sigcfg_master.reports[grp].count++;
-				sigconfig_data_ready = true;
-			}
-		}
-
-		k_sem_give(&sem_report_queue);
-	}
-
-	return sigconfig_data_ready;
 }
 
 uint32_t sigconfig_push(char *report, struct var_param_s *params, int param_count, int64_t real_time)
@@ -415,71 +203,86 @@ uint32_t sigconfig_push(char *report, struct var_param_s *params, int param_coun
 	uint32_t sequence =	0;
 
 	// For all report groups...
-	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++)
-	{
+	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++) {
 		// Verify report name
 		if (strcmp(report, sigcfg_master.reports[grp].report_name) == 0) {
 
-			// Verify availability in report queue
-			int	count =	sigcfg_master.reports[grp].count;
-			if (count <	VAR_REPORT_QUEUE_SIZE) {
-
-				// Check report	queue is free to write to
+			// Verify availability in field	data array and report queue.
+			if (sigcfg_master.reports[grp].queue_count < VAR_REPORT_QUEUE_SIZE && !sigconfig_field_data_full())	{
+	
+				// Check report	queue is free to write to.
 				if (k_sem_take(&sem_report_queue, K_MSEC(100)) != 0) {
 					LOG_ERR("Group %d [%s] queue busy. Data	dropped.", grp,	log_strdup(report));
 					uart_send("+rsp,push:busy\r\n",	0);
 					return 0;
 				}
-
+				
 				// Set report queue	index to next avaliable	element	in array.
-				int	index =	(sigcfg_master.reports[grp].index %	VAR_REPORT_QUEUE_SIZE);
-				LOG_INF("Storing data for group	%d [%s]	in element %d of queue.", grp, log_strdup(report), index);
+				int	queue_index	= (sigcfg_master.reports[grp].queue_index %	VAR_REPORT_QUEUE_SIZE);
+				LOG_DBG("Storing data for group	%d [%s]	in element %d of queue.", grp, log_strdup(report), queue_index);
 
-				sigcfg_master.reports[grp].storage[index].ts_s = (uint32_t)(real_time /	1000);
-				sigcfg_master.reports[grp].storage[index].ts_ms	= (uint32_t)(real_time % 1000);
-
-				// Limit report	fields to max
+				// Limit report	fields to max.
 				int	no_params =	param_count;
 				if (no_params >	VAR_MAX_FIELDS)	{
 					LOG_ERR("Unable	to parse more than %d fields.",	VAR_MAX_FIELDS);
 					no_params =	VAR_MAX_FIELDS;
 				}
 
-				// Copy	field data to report fields
+				// Copy	field data to report fields.
 				for	(int field = 0 ; field < no_params ; field++) {
+					
+					// Check for max field data.
+					if (sigconfig_field_data_full()) {
+						LOG_ERR("Max field data	reached. Remaining feilds dropped.");
+						break;
+					}
+					
+					// Map static field	element	to this	report field.
+					sigcfg_master.reports[grp].fields[field].storage[queue_index].size = MAX_FIELD_VAL_LEN;
+					sigcfg_master.reports[grp].fields[field].storage[queue_index].data = field_data[sigcfg_master.field_index];
+
+					// Assign param	value to report	field.
 					if (params[field].value) {
 						if (params[field].value[0] == '"') {
 							sigcfg_master.reports[grp].fields[field].type =	CBOR_TEXT;
 							params[field].value[strlen(params[field].value)] = 0;
-							strncpy((char*)sigcfg_master.reports[grp].fields[field].storage[index].data, &params[field].value[0], sigcfg_master.reports[grp].fields[field].storage[index].size);
+							strncpy((char*)sigcfg_master.reports[grp].fields[field].storage[queue_index].data, &params[field].value[0],	sigcfg_master.reports[grp].fields[field].storage[queue_index].size);
 						}
 						else {
 							sigcfg_master.reports[grp].fields[field].type =	CBOR_INT32;
-							*((uint32_t*)(sigcfg_master.reports[grp].fields[field].storage[index].data)) = atoi(params[field].value);
+							*((uint32_t*)(sigcfg_master.reports[grp].fields[field].storage[queue_index].data)) = atoi(params[field].value);
 						}
 					}
 					else {
 						sigcfg_master.reports[grp].fields[field].type =	CBOR_TEXT;
-						sigcfg_master.reports[grp].fields[field].storage[index].data[0]	= 0;
+						sigcfg_master.reports[grp].fields[field].storage[queue_index].data[0] =	0;
 					}
-
+					
+					// Assign param	key	to report field.
 					strncpy(sigcfg_master.reports[grp].fields[field].field_name, params[field].key,	sizeof(sigcfg_master.reports[grp].fields[field].field_name));
+					
+					// Update number of	fields.
+					sigcfg_master.reports[grp].num_fields[queue_index]++;
+					sigcfg_master.field_count++;
+					sigcfg_master.field_index++;
+					if (sigcfg_master.field_index >= MAX_FIELD_DATA) {
+						sigcfg_master.field_index =	0;
+					}
 				}
-
-				sigcfg_master.reports[grp].num_fields =	no_params;
-
-				// Update sequence number
+				
+				// Update sequence number and timestamp.
 				sequence = sigcfg_master.sequence++;
-				sigcfg_master.reports[grp].storage[index].sequence = sequence;
+				sigcfg_master.reports[grp].storage[queue_index].sequence = sequence;
+				sigcfg_master.reports[grp].storage[queue_index].ts_s = (uint32_t)(real_time	/ 1000);
+				sigcfg_master.reports[grp].storage[queue_index].ts_ms =	(uint32_t)(real_time % 1000);
 
-				// Update index	and	count
-				sigcfg_master.reports[grp].index++;
-				sigcfg_master.reports[grp].count++;
-				sigconfig_data_ready = true;
-
+				// Update queue	index and count.
+				sigcfg_master.reports[grp].queue_index++;	
+				sigcfg_master.reports[grp].queue_count++;
+				
 				k_sem_give(&sem_report_queue);
 
-				// LORA	LTE_send();
+	//TODO change to LorA send semaphore			LTE_send();
 				break;
 			}
 			else {
@@ -492,12 +295,19 @@ uint32_t sigconfig_push(char *report, struct var_param_s *params, int param_coun
 	return sequence;
 }
 
+void* sigconfig_set_report_names(void *value)
+{
+	for	(int grp = 0 ; grp < sigcfg_master.num_reports ; grp++)	{
+		strcpy(sigcfg_master.reports[grp].report_name, var_report[grp].data);
+	}
+	return NULL;
+}
+
 bool sigconfig_ready_to_send(void)
 {
-	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++)
-	{
+	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++) {
 		int	reporting_interval = sigcfg_master.reports[grp].report_interval_s /	sigcfg_master.reports[grp].sample_interval_s;
-		if (sigcfg_master.reports[grp].count >=	reporting_interval)	{
+		if (sigcfg_master.reports[grp].queue_count >= reporting_interval) {
 			return true;
 		}
 	}
@@ -506,20 +316,28 @@ bool sigconfig_ready_to_send(void)
 
 bool sigconfig_full(void)
 {
-	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++)
-	{
-		if (sigcfg_master.reports[grp].count >=	sigcfg_master.reports[grp].max_records)	{
+	for	(int grp = 0; grp <	sigcfg_master.num_reports; grp++) {
+		if (sigcfg_master.reports[grp].queue_count >= sigcfg_master.reports[grp].max_records) {
 			return true;
 		}
 	}
 	return false;
 }
 
+bool sigconfig_field_data_full(void)
+{
+	if (sigcfg_master.field_count >= MAX_FIELD_DATA) {
+		return true;
+	}
+	
+	return false;
+}
+
 bool sigconfig_get_records_to_send(int count, int idx, int *record_first, int *record_last)
 {
-	// Check that records exist	in queue
-	if(count){
-		// Set indexed range of	records
+	// Check that records exist	in queue.
+	if(count) {
+		// Set indexed range of	records.
 		*record_last = idx % VAR_REPORT_QUEUE_SIZE - 1;
 		*record_first =	*record_last - count+1;
 		if (*record_first <	0) {
@@ -585,8 +403,7 @@ static int process_server_message(uint8_t *pCbor, uint32_t cborLen)
 static int process_ssr(cbor_data_t server_request)
 {
 	cbor_data_t	cur	= cbor_retrieve(server_request,	"ssr");
-	if (cur.b == NULL)
-	{
+	if (cur.b == NULL) {
 		return 0;
 	}
 	int	num_ssr	= cbor_get_array_count(&cur);
@@ -617,7 +434,6 @@ static void	ssr_process(cbor_data_t	c)
 	return;
 
 }
-#endif
 
 static int queue_ssr_reply(uint32_t	ssrid, const char *reply)
 {
@@ -629,7 +445,9 @@ static int queue_ssr_reply(uint32_t	ssrid, const char *reply)
 
 	return 1;
 }
+#endif
 
+#if	0 // TODO(David, ):	TBI
 static int get_sigconfig_settings(cbor_data_t server_request, struct sigconfig_master_s	* Settings)
 {
 	char name[16];
@@ -679,8 +497,7 @@ static int get_sigconfig_settings(cbor_data_t server_request, struct sigconfig_m
 
 
 	///	parsing	reports
-	for(size_t i = 0; i	< settings.num_reports;	i++)
-	{
+	for(size_t i = 0; i	< settings.num_reports;	i++) {
 		settings.reports[i].report_interval_s =	cbor_retrieve_int(cb_ssr_data_reports, "report_interval", 0);
 		settings.reports[i].sample_interval_s =	cbor_retrieve_int(cb_ssr_data_reports, "sample_interval", 0);
 		cbor_retrieve_text(cb_ssr_data_reports,	"name",	&settings.reports[i].report_name, sizeof(settings.reports[i].report_name), "");
@@ -692,14 +509,12 @@ static int get_sigconfig_settings(cbor_data_t server_request, struct sigconfig_m
 
 
 		cbor_data_t	cb_ssr_data_reports_fields = cbor_retrieve(cb_ssr_data_reports,	"fields");
-		settings.reports[i].num_fields = cbor_get_array_count(&cb_ssr_data_reports_fields);
+		settings.reports[i].num_fields[i] =	cbor_get_array_count(&cb_ssr_data_reports_fields);
 
 
 		bool valid = true;
 
-		for	(size_t	j =	0; j < settings.reports[i].num_fields && valid;	j++)
-		{
-
+		for	(size_t	j =	0; j < settings.reports[i].num_fields[i] &&	valid; j++)	{
 			cbor_retrieve_text(cb_ssr_data_reports_fields, "name", settings.reports[i].fields[j].field_name, sizeof(settings.reports[i].fields[j].field_name), "");
 			cbor_retrieve_text(cb_ssr_data_reports_fields, "outValue", outValue, sizeof(outValue), "");
 			cbor_retrieve_text(cb_ssr_data_reports_fields, "type", temp_buff, sizeof(temp_buff), "");
@@ -707,8 +522,7 @@ static int get_sigconfig_settings(cbor_data_t server_request, struct sigconfig_m
 			settings.reports[i].fields[j].type = get_field_type_from_text(temp_buff);
 			// printf("	 name:%s, outValue:%s, type:%s \n",	name, outValue,	type);
 			for	(int q = 0 ; q < VAR_REPORT_QUEUE_SIZE ; q++) {
-				if(settings.reports[i].fields[j].type == CBOR_INT32)
-				{
+				if(settings.reports[i].fields[j].type == CBOR_INT32) {
 					settings.reports[i].fields[j].storage[q].data =	(uint32_t*)packet_space;
 					settings.reports[i].fields[j].storage[q].size =	4;
 					packet_space +=	4;
@@ -719,8 +533,7 @@ static int get_sigconfig_settings(cbor_data_t server_request, struct sigconfig_m
 			settings.reports[i].fields[j].num_actions =	cbor_get_array_count(&cb_ssr_data_reports_fields_get);
 
 
-			for(size_t k = 0; k	< settings.reports[i].fields[j].num_actions; k++)
-			{
+			for(size_t k = 0; k	< settings.reports[i].fields[j].num_actions; k++) {
 				int	out	= cbor_retrieve_int(cb_ssr_data_reports_fields_get,	"out", 0);
 				cbor_retrieve_text(cb_ssr_data_reports_fields_get, "port", port, sizeof(port), "");
 				cbor_retrieve_text(cb_ssr_data_reports_fields_get, "proto",	temp_buff, sizeof(temp_buff), "");
@@ -747,6 +560,7 @@ static int get_sigconfig_settings(cbor_data_t server_request, struct sigconfig_m
 	*Settings =	settings;
 	return 0;
 }
+#endif
 
 static uint8_t get_field_type_from_text(uint8_t	* type)
 {

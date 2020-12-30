@@ -66,7 +66,7 @@ VAR_STR_CREATE(user,		 80, "user");
 VAR_STR_CREATE(pw,			257, "");
 VAR_STR_CREATE(firmware,	 32, "v0.0.0");
 VAR_STR_CREATE(mfirmware,	 32, "v0.0.0");
-VAR_STR_CREATE(proto,		  8, "coap");
+VAR_STR_CREATE(proto,		  8, "lora");
 VAR_STR_CREATE(current_proto, 8, "none");
 VAR_STR_CREATE(sensor, 32, "temp_humid");
 VAR_STR_CREATE(sensor_board, 32, "THA");
@@ -123,12 +123,11 @@ struct var_str_s var_report[VAR_MAX_REPORTS] = {
 };
 
 // LoRa	Vars
-uint8_t	 var_lora_mode = 0;
+VAR_STR_CREATE(lora_auth, 5, "");
 VAR_STR_CREATE(lora_app_skey, 8, "");
 VAR_STR_CREATE(lora_nwk_skey, 8, "");
 VAR_STR_CREATE(lora_app_eui, 16, "");
 VAR_STR_CREATE(lora_dev_eui, 8,	"");
-VAR_STR_CREATE(lora_join_eui, 8, "");
 VAR_STR_CREATE(lora_app_key, 16, "");
 
 // GPS Vars
@@ -240,12 +239,11 @@ enum var_save_id {
 	id_queue3		= 13,
 	id_queue4		= 14,
 	id_queue5		= 15,
-	id_loramode,
+	id_lora_auth,
 	id_appskey,
 	id_nwkskey,
 	id_appeui,
 	id_deveui,
-	id_joineui,
 	id_appkey
 };
 
@@ -311,15 +309,15 @@ static struct key_setget_s setget[]	= {
 //	{"privkey",	vtype_str, vdir_readwrite, NULL, (setter)privkey_write,	(getter)privkey_read, id_none},
 	{"sectag", vtype_uint16, vdir_readwrite, &var_sectag, NULL,	NULL, id_none},
 	{"sectagq",	vtype_uint16, vdir_readwrite, &var_sectagquery,	NULL, NULL,	id_none},
-	{"fotahost", vtype_str,	vdir_readwrite,	&var_fotahost, NULL, NULL, id_fotahost},
-	{"fotahostname", vtype_str,	vdir_readwrite,	&var_fotahostname, NULL, NULL, id_fotahostname},
-	{"fotafile", vtype_str,	vdir_readwrite,	&var_fotafile, NULL, NULL, id_none},
-	{"fotasubfile",	vtype_str, vdir_readwrite, &var_fotafile, NULL,	NULL, id_none},
+//	{"fotahost", vtype_str,	vdir_readwrite,	&var_fotahost, NULL, NULL, id_fotahost},
+//	{"fotahostname", vtype_str,	vdir_readwrite,	&var_fotahostname, NULL, NULL, id_fotahostname},
+//	{"fotafile", vtype_str,	vdir_readwrite,	&var_fotafile, NULL, NULL, id_none},
+//	{"fotasubfile",	vtype_str, vdir_readwrite, &var_fotafile, NULL,	NULL, id_none},
 //	{"fotastart", vtype_boolean, vdir_write, NULL, (setter)fota_start, NULL, id_none},
 //	{"fotasubstart", vtype_boolean,	vdir_write,	NULL, (setter)fotasub_start, NULL, id_none},
-	{"fotastate", vtype_uint16,	vdir_read, &var_fotastate, NULL, NULL, id_none},
-	{"fotasubstate", vtype_uint16, vdir_read, &var_fotasubstate, NULL, NULL, id_none},
-	{"fotasectag", vtype_uint16, vdir_readwrite, &var_fotasectag, NULL,	NULL, id_none},
+//	{"fotastate", vtype_uint16,	vdir_read, &var_fotastate, NULL, NULL, id_none},
+//	{"fotasubstate", vtype_uint16, vdir_read, &var_fotasubstate, NULL, NULL, id_none},
+//	{"fotasectag", vtype_uint16, vdir_readwrite, &var_fotasectag, NULL,	NULL, id_none},
 //	{"fotasuback", vtype_boolean, vdir_write, NULL,	(setter)fotasuback_set,	NULL, id_none},
 	{"dlcount",	vtype_uint16, vdir_read, &var_dlcount, NULL, NULL, id_none},
 	{"dlchunks", vtype_uint16, vdir_readwrite, &var_dlchunks, NULL,	NULL, id_none},
@@ -333,16 +331,15 @@ static struct key_setget_s setget[]	= {
 	{"reboot", vtype_boolean, vdir_write, NULL,	(setter)reboot,	NULL, id_none},
 	{"save", vtype_boolean,	vdir_readwrite,	NULL, (setter)flash_save, (getter)flash_load, id_none},
 
-	{"loramode",	vtype_uint8,  vdir_readwrite, &var_lora_mode, NULL,	NULL, id_loramode},
+	// LoRa
+	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,	NULL,	NULL, id_lora_auth},
+	{"deveui",	vtype_str, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
 	// LoRa	ABP
-	{"app_skey",	vtype_str, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
-	{"nwk_skey", vtype_str,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
-	{"app_eui",	vtype_str, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
-
+	{"appskey",	vtype_str, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
+	{"nwkskey",	vtype_str,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
 	// LoRa	OTAA
-	{"dev_eui",	vtype_str, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
-	{"join_eui", vtype_str,	vdir_readwrite,	&var_lora_join_eui,	NULL, NULL,	id_joineui},
-	{"app_key",	vtype_str, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
+	{"appkey",	vtype_str, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
+	{"appeui",	vtype_str, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
 
 	// GPS API (TODO: C.Lawson -- Finish!)
 //	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},

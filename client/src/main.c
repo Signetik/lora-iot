@@ -12,6 +12,7 @@
 #include "led_task.h"
 #include "bt_task.h"
 #include "lora_task.h"
+#include "uart_task.h"
 #include "vars.h"
 
 
@@ -22,7 +23,7 @@ void main(void)
 
 	
 	// Start RTOS task threads.
-//	uart_thread_start();
+	uart_thread_start();
 	led_thread_start();
 	bt_thread_start();
 	lora_thread_start();
