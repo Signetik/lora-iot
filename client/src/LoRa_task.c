@@ -22,6 +22,7 @@
 //#include <at_cmd.h>
 #include <drivers/gpio.h>
 #include <drivers/lora.h>
+#include <lorawan/lorawan.h>
 
 //#include <dfu/mcuboot.h>
 //#include <dfu/dfu_target.h>
@@ -60,7 +61,7 @@ LOG_MODULE_REGISTER(loratask, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 #define	APP_COAP_MAX_MSG_LEN (2048 + 16)
 #define	APP_COAP_VERSION 1
 
-#define	MAX_TX_DATA_LEN	10
+#define	MAX_TX_DATA_LEN	12
 #define	MAX_RX_DATA_LEN	255
 #define	TX_CW
 
@@ -81,29 +82,44 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	int	ret;
 	int	err;
 	int	record_number =	0;
-	char txData[MAX_TX_DATA_LEN] = {'h', 'e', 'l', 'l',	'o', 'w', 'o', 'r',	'l', 'd'};
+	char txData[MAX_TX_DATA_LEN] = {0x64, 0x01, 0x00, 0x00, 0x00, 0x0E, 0xE1, 0x39, 0x00, 0x00, 0x00, 0x00};
 	uint8_t	rxData[MAX_RX_DATA_LEN]	= {0};
 
 	const struct device	*lora_dev;
+	const struct device *dev1;
+
+	uint8_t app_eui[] = {0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x03, 0x31, 0xC9};
+	uint8_t nwk_skey[] = {0x0B, 0x30, 0x52, 0x51, 0xA6, 0x0C, 0x52, 0x11, 0x72, 0x32, 0x85, 0xD1, 0xFB, 0x2E, 0xF8, 0x39};
+	uint8_t app_skey[] = { 0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7 };
+	uint8_t dev_eui[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1d, 0x4c };
 
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
-#if(0)
+//
+	//dev1 = device_get_binding("GPIO_1");
+	//gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
+	//gpio_pin_set(dev1, 7,	1);
+
+#if(1)
 	lorawan_start();
+	lorawan_set_class(LORAWAN_CLASS_C);
+	lorawan_enable_adr(false);
+	lorawan_set_datarate(LORAWAN_DR_1);
+
 	const struct lorawan_join_config lw_config = {
 		.abp = {
-			0x12341234,
-			dummy, /* app_skey */
-			dummy, /* nwk_skey */
-			dummy  /* app_eui */
+			0x26029100, /* devid */
+			app_skey,
+			nwk_skey,
+			app_eui
 		},
-		.dev_eui = dummy,
+		.dev_eui = dev_eui,
 		.mode = LORAWAN_ACT_ABP
 	};
 	lorawan_join(&lw_config);
 	while (1) {
-		lorawan_send(1, "AB", 2, 0 /*LORAWAN_MSG_CONFIRMED*/);
-		k_sleep(K_MSEC(1000));
+		lorawan_send(1, txData, MAX_TX_DATA_LEN, 0 /*LORAWAN_MSG_CONFIRMED*/);
+		k_sleep(K_MSEC(5000));
 	}
 #endif
 
@@ -136,6 +152,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	}
 #else
 	while (1) {
+		ret	= lora_config(lora_dev,	&config);
 		ret	= lora_send(lora_dev, txData,	MAX_TX_DATA_LEN);
 		if (ret	< 0) {
 			LOG_ERR("LoRa send failed");
