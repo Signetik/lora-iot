@@ -16,6 +16,7 @@
 #include "modem_ascii_interface_api.h"
 #include "vars.h"
 #include "sigconfig.h"
+#include "lora_task.h"
 
 LOG_MODULE_REGISTER(modem_asc, LOG_LEVEL_DBG);
 
@@ -407,16 +408,16 @@ static void	ascii_handler_get(struct modem_ascii_state_s *state, struct	command_
 
 static void	ascii_handler_push(struct modem_ascii_state_s *state, struct command_s *command)
 {
-	uint32_t sequence =	sigconfig_push(command->parameters[0].key, &command->parameters[1],	command->param_count-1,	k_uptime_get()/* + base_time*/ );
-	char result[16];
+	int	ret	= 0;
+	
+	ret	= lora_push(command->parameters[0].key,	command->parameters[0].value);
 
-	if (sequence > 0) {
-		snprintf(result, sizeof(result), "%u", sequence);
-		send_response_tty(state, "+rsp,result:0,mark:");
-		send_response_tty(state, result);
-		send_response_tty(state, "\r\n");
+	if (ret	>= 0)
+	{
+		send_response_tty(state, "+rsp,result:0\r\n");
 	}
-	else {
+	else
+	{
 		modem_ascii_send_error(state, invalid_report);
 	}
 }

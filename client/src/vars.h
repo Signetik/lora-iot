@@ -17,23 +17,23 @@
 #include <stdbool.h>
 #endif
 
-#define MAX_KEY_LEN 24
-#define MAX_VAL_LEN 128
-#define MAX_FIELD_VAL_LEN 16
-#define MAX_FIELD_DATA	25
+#define	MAX_KEY_LEN	24
+#define	MAX_VAL_LEN	128
+#define	MAX_FIELD_VAL_LEN 16
+#define	MAX_FIELD_DATA	25
 
-#define VAR_TOPIC_SIZE 128
-#define VAR_REPORT_NAME_SIZE 16
-#define VAR_FIELD_NAME_SIZE MAX_KEY_LEN
-#define VAR_REPORT_QUEUE_SIZE 5
+#define	VAR_TOPIC_SIZE 128
+#define	VAR_REPORT_NAME_SIZE 16
+#define	VAR_FIELD_NAME_SIZE	MAX_KEY_LEN
+#define	VAR_REPORT_QUEUE_SIZE 5
 
-#define VAR_MAX_REPORTS 5
-#define VAR_MAX_FIELDS  5
+#define	VAR_MAX_REPORTS	5
+#define	VAR_MAX_FIELDS	5
 
 // GPS
-#define VAR_GPS_NAME_SIZE  16
-#define VAR_MAX_GPS_REPORTS 5
-#define VAR_MAX_GPS_FIELDS  5
+#define	VAR_GPS_NAME_SIZE  16
+#define	VAR_MAX_GPS_REPORTS	5
+#define	VAR_MAX_GPS_FIELDS	5
 
 // NMEA
 #define	VAR_NMEA_NAME_SIZE	 4 // GGA, RMC,	VTG, etc.
@@ -47,9 +47,9 @@
 #define	APP_KEY_MAX_SZ 16
 
 /* ABP */
-#define	APP_SKEY_MAX_SZ	8
-#define	NWK_SKEY_MAX_SZ	8
-#define	APP_EUI_MAX_SZ 16
+#define	APP_SKEY_MAX_SZ	16
+#define	NWK_SKEY_MAX_SZ	16
+#define	APP_EUI_MAX_SZ	 8
 
 
 struct var_param_s {
@@ -96,50 +96,50 @@ extern uint32_t	var_device_id;
 extern struct var_str_s	var_firmware;
 extern struct var_str_s	var_mfirmware;
 extern uint8_t var_battery;
-extern bool var_connected;
-extern bool var_connect;
-extern bool var_auto_connect;
-extern uint32_t var_queue_mark;
-extern uint32_t var_push_mark;
-extern uint32_t var_rsrp;
+extern bool	var_connected;
+extern bool	var_connect;
+extern bool	var_auto_connect;
+extern uint32_t	var_queue_mark;
+extern uint32_t	var_push_mark;
+extern uint32_t	var_rsrp;
 
-extern struct var_str_s var_proto;
-extern struct var_str_s var_current_proto;
-extern struct var_str_s var_sensor;
-extern struct var_str_s var_sensor_board;
+extern struct var_str_s	var_proto;
+extern struct var_str_s	var_current_proto;
+extern struct var_str_s	var_sensor;
+extern struct var_str_s	var_sensor_board;
 
-extern bool var_enabled;
-extern bool var_tls;
-extern bool var_sensor_poll;
+extern bool	var_enabled;
+extern bool	var_tls;
+extern bool	var_sensor_poll;
 
-extern struct var_str_s var_imei;
-extern bool var_nbiot;
+extern struct var_str_s	var_imei;
+extern bool	var_nbiot;
 
-extern struct var_str_s var_report[VAR_MAX_REPORTS];
+extern struct var_str_s	var_report[VAR_MAX_REPORTS];
 
-extern uint16_t var_connretry;
-extern uint16_t var_sectag;
+extern uint16_t	var_connretry;
+extern uint16_t	var_sectag;
 
-extern struct var_str_s var_fotahost;
-extern struct var_str_s var_fotahostname;
-extern struct var_str_s var_fotafile;
-extern uint16_t var_fotastate;
-extern uint16_t var_fotasubstate;
-extern uint16_t var_fotasectag;
+extern struct var_str_s	var_fotahost;
+extern struct var_str_s	var_fotahostname;
+extern struct var_str_s	var_fotafile;
+extern uint16_t	var_fotastate;
+extern uint16_t	var_fotasubstate;
+extern uint16_t	var_fotasectag;
 
-extern uint16_t var_dlcount;
-extern uint16_t var_dlchunks;
-extern uint32_t var_dloffset;
-extern uint16_t var_dlretries;
-extern uint16_t var_dlretrycount;
+extern uint16_t	var_dlcount;
+extern uint16_t	var_dlchunks;
+extern uint32_t	var_dloffset;
+extern uint16_t	var_dlretries;
+extern uint16_t	var_dlretrycount;
 
-extern bool var_dfuready;
-extern bool var_fwupdate;
+extern bool	var_dfuready;
+extern bool	var_fwupdate;
 
-extern struct var_str_s var_devtype;
-extern bool var_binary;
-extern bool var_leds;
-extern uint16_t var_polltimeout;
+extern struct var_str_s	var_devtype;
+extern bool	var_binary;
+extern bool	var_leds;
+extern uint16_t	var_polltimeout;
 extern struct var_str_s	var_lora_auth;
 extern struct var_str_s	var_lora_app_skey;
 extern struct var_str_s	var_lora_nwk_skey;

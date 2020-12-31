@@ -133,7 +133,7 @@ int	uart_send(uint8_t *buffer, int length)
 
 	if (length == 0)
 	{
-	length = strlen(buffer);
+		length = strlen(buffer);
 	}
 
 	k_sem_take(&sem_tty, K_FOREVER);
@@ -147,7 +147,7 @@ static void	process_bytes(struct modem_state_s *modem_state, char *data, int len
 {
 	for	(int index = 0;	index <	length;	index++)
 	{
-	api->process_byte(modem_state, data[index]);
+		api->process_byte(modem_state, data[index]);
 	}
 }
 

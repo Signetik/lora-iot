@@ -123,10 +123,10 @@ struct var_str_s var_report[VAR_MAX_REPORTS] = {
 };
 
 // LoRa	Vars
-VAR_STR_CREATE(lora_auth, 5, "");
-VAR_STR_CREATE(lora_app_skey, 8, "");
-VAR_STR_CREATE(lora_nwk_skey, 8, "");
-VAR_STR_CREATE(lora_app_eui, 16, "");
+VAR_STR_CREATE(lora_auth, 5, "abp");
+VAR_STR_CREATE(lora_app_skey, 16, "");
+VAR_STR_CREATE(lora_nwk_skey, 16, "");
+VAR_STR_CREATE(lora_app_eui, 8,	"");
 VAR_STR_CREATE(lora_dev_eui, 8,	"");
 VAR_STR_CREATE(lora_app_key, 16, "");
 

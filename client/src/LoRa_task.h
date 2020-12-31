@@ -9,13 +9,11 @@
 #ifndef	__LORA_TASK_H
 #define	__LORA_TASK_H
 
-//#include "cell_packet.h"
-
-extern uint8_t * COAP_buff_ptr;
-extern uint32_t	 COAP_buff_len;
-extern int64_t base_time;
+#include "vars.h"
 
 void lora_thread_start(void);
+int	lora_push(char *key, char *value);
+
 
 //extern const cell_packet_def_t *sig_default_packet_def;
 
