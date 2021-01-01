@@ -47,6 +47,10 @@ LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
  */
 #define	LORA_TX_BUF_SIZE 255
 
+#define	APP_COAP_SEND_INTERVAL_MS K_MSEC(5000)
+#define	APP_COAP_MAX_MSG_LEN (2048 + 16)
+#define	APP_COAP_VERSION 1
+
 #define	MAX_TX_DATA_LEN	12
 #define	MAX_RX_DATA_LEN	255
 //#define	TX_CW
@@ -118,8 +122,15 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	int8_t snr;
 	int	len;
 	struct lorawan_join_config lw_config;	/* loraWan configuration */
-	
+	int	ret;
+	int	err;
+	int	record_number =	0;
+	char txData[MAX_TX_DATA_LEN] = {0x64, 0x01, 0x00, 0x00, 0x00, 0x0E, 0xE1, 0x39, 0x00, 0x00, 0x00, 0x00};
+	uint8_t	rxData[MAX_RX_DATA_LEN]	= {0};
+
 	const struct device	*lora_dev;
+	const struct device *dev1;
+
 	lora_dev = device_get_binding(DEFAULT_RADIO);
 	if (!lora_dev) 
 	{
@@ -129,6 +140,9 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
+	//dev1 = device_get_binding("GPIO_1");
+	//gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
+	//gpio_pin_set(dev1, 7,	1);
 #if	1
 
 	while (1)
@@ -203,20 +217,29 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 #elif(0)
 	lorawan_start();
+	lorawan_set_class(LORAWAN_CLASS_C);
+	lorawan_enable_adr(false);
+	lorawan_set_datarate(LORAWAN_DR_1);
+
 	const struct lorawan_join_config lw_config = {
 		.abp = {
-			0x12341234,
-			dummy, /* app_skey */
-			dummy, /* nwk_skey */
-			dummy  /* app_eui */
+			0x26029100, /* devid */
+			app_skey,
+			nwk_skey,
+			app_eui
 		},
-		.dev_eui = dummy,
+		.dev_eui = dev_eui,
 		.mode =	LORAWAN_ACT_ABP
 	};
 	lorawan_join(&lw_config);
 	while (1) {
 		lorawan_send(1,	txData,	MAX_TX_DATA_LEN, 0 /*LORAWAN_MSG_CONFIRMED*/);
 		k_sleep(K_MSEC(5000));
+
+	lora_dev = device_get_binding(DEFAULT_RADIO);
+	if (!lora_dev) {
+		LOG_ERR("%s	Device not found", DEFAULT_RADIO);
+		return;
 	}
 #elif	defined(TX_CW)
 
