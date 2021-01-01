@@ -106,11 +106,21 @@ void led_thread(void *p1, void *p2,	void *p3)
 	while (1)
 	{
 		LOG_DBG("LoRa Thread loop...");
-		gpio_pin_set(led_r,	LEDR_PIN,	led_msg.red);
-		gpio_pin_set(led_g,	LEDG_PIN,	led_msg.green);
-		gpio_pin_set(led_b,	LEDB_PIN,	led_msg.blue);
-		gpio_pin_set(led_en, LEDEN_PIN,	led_msg.enable);
-
+		if (var_leds)
+		{
+			gpio_pin_set(led_r,	LEDR_PIN,	led_msg.red);
+			gpio_pin_set(led_g,	LEDG_PIN,	led_msg.green);
+			gpio_pin_set(led_b,	LEDB_PIN,	led_msg.blue);
+			gpio_pin_set(led_en, LEDEN_PIN,	led_msg.enable);
+		}
+		else
+		{
+			// allow var_leds to override ON setting in	message
+			gpio_pin_set(led_r,	LEDR_PIN,	0);
+			gpio_pin_set(led_g,	LEDG_PIN,	0);
+			gpio_pin_set(led_b,	LEDB_PIN,	0);
+			gpio_pin_set(led_en, LEDEN_PIN,	0);
+		}
 		k_sleep(K_MSEC(1000));
 
 		led_msg.blue = led_msg.red;
