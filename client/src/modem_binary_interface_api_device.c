@@ -14,6 +14,7 @@
 #include "modem_binary_interface_api_shared.h"
 #include "vars.h"
 #include "sigconfig.h"
+#include "lora_task.h"
 
 LOG_MODULE_REGISTER(modem_bin, LOG_LEVEL_DBG);
 
@@ -244,18 +245,22 @@ static void	binary_handler_push(struct modem_binary_state_s	*state,	struct modem
 
 	int	param_count	= (int)cmd->payload.push.params_count;
 	struct var_param_s params[param_count];
-	for	(int i=0; i<param_count; i++) {
-		memcpy(&params[i].key[0], &cmd->payload.push.key[i][0],	sizeof(cmd->payload.push.key[i]));
-		params[i].value	= cmd->payload.push.value[i];
-		params[i].vlen = strlen((char*)cmd->payload.push.value[i])+1;
-		LOG_INF("key: %s, value: %s", log_strdup(&params[i].key), log_strdup(params[i].value));
-		LOG_INF("params[%d].vlen: %d", i, params[i].vlen);
-	}
+//	for	(int i=0; i<param_count; i++) {
+		memcpy(&params[0].key[0], &cmd->payload.push.key[0][0],	sizeof(cmd->payload.push.key[0]));
+		params[0].value	= cmd->payload.push.value[0];
+		params[0].vlen = strlen((char*)cmd->payload.push.value[0])+1;
+		LOG_INF("key: %s, value: %s", log_strdup(&params[0].key), log_strdup(params[0].value));
+		LOG_INF("params[%d].vlen: %d", 0, params[0].vlen);
+//	}
 	int64_t	realtime = k_uptime_get(); // in LTE +	base_time;
 	
-	sequence = sigconfig_push(report_name, params, param_count,	realtime);
-	if (sequence <=	0) {
-		LOG_INF("sigconfig_push	fail: sequence:	%d", sequence);
+	int	ret;
+	
+	ret	= lora_push(params[0].key, params[0].value);
+
+	if (ret	< 0)
+	{
+		LOG_INF("sigconfig_push	fail");
 		modem_binary_send_error(state, verr_inv_access);
 		return;
 	}
@@ -263,7 +268,7 @@ static void	binary_handler_push(struct modem_binary_state_s	*state,	struct modem
 	// Fill	in response	data.
 	response.header.response = MODEM_RSP_PUSH;
 	response.header.result = 0;
-	response.payload.push.mark = sequence;
+	response.payload.push.mark = 0;
 
 	length = sizeof(struct header_response_s) +	sizeof(response.payload.push);
 	LOG_INF("MODEM_RSP_PUSH: result: %d, mark: %d",	response.header.result,	response.payload.push.mark);
