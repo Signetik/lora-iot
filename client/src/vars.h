@@ -146,7 +146,7 @@ extern struct var_str_s	var_lora_nwk_skey;
 extern struct var_str_s	var_lora_app_eui;
 extern struct var_str_s	var_lora_dev_eui;
 extern struct var_str_s	var_lora_app_key;
-
+extern uint32_t var_lora_dev_addr;
 
 int	list_next_command(char *command);
 

@@ -129,6 +129,7 @@ VAR_STR_CREATE(lora_nwk_skey, 16, "");
 VAR_STR_CREATE(lora_app_eui, 8,	"");
 VAR_STR_CREATE(lora_dev_eui, 8,	"");
 VAR_STR_CREATE(lora_app_key, 16, "");
+uint32_t var_lora_dev_addr = 0x26029100;
 
 // GPS Vars
 uint16_t var_gpsinterval =	0;
@@ -244,7 +245,8 @@ enum var_save_id {
 	id_nwkskey,
 	id_appeui,
 	id_deveui,
-	id_appkey
+	id_appkey,
+	id_devaddr
 };
 
 struct key_setget_s	{
@@ -340,6 +342,7 @@ static struct key_setget_s setget[]	= {
 	// LoRa	OTAA
 	{"appkey",	vtype_str, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
 	{"appeui",	vtype_str, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
+	{"devaddr",	vtype_uint32, vdir_readwrite, &var_lora_dev_addr,	NULL, NULL,	id_devaddr},
 
 	// GPS API (TODO: C.Lawson -- Finish!)
 //	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},
