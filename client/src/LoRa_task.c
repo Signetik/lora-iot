@@ -90,11 +90,19 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	{
 	//	Authentication by personalization
 		join_cfg->mode = LORAWAN_ACT_ABP;
+#if(1)
 		join_cfg->dev_eui =	dev_eui;			// var_lora_dev_eui.data;
-		join_cfg->abp.dev_addr = 0x26029100;	// device address?
+		join_cfg->abp.dev_addr = var_lora_dev_addr;			// device address
 		join_cfg->abp.app_skey = app_skey;		// var_lora_app_skey.data;
 		join_cfg->abp.nwk_skey = nwk_skey;		// var_lora_nwk_skey.data;
-		join_cfg->abp.app_eui =	app_eui;		// var_lora_app_eui.data;
+		join_cfg->abp.app_eui =	app_eui;			// var_lora_app_eui.data;
+#else
+		join_cfg->dev_eui =	var_lora_dev_eui.data;			// var_lora_dev_eui.data;
+		join_cfg->abp.dev_addr = var_lora_dev_addr;			// device address
+		join_cfg->abp.app_skey = var_lora_app_skey.data;		// var_lora_app_skey.data;
+		join_cfg->abp.nwk_skey = var_lora_nwk_skey.data;		// var_lora_nwk_skey.data;
+		join_cfg->abp.app_eui =	var_lora_dev_eui.data;			// var_lora_app_eui.data;
+#endif
 	}
 	else if	(strcmp(var_lora_auth.data,	"otaa")	== 0)
 	{
@@ -214,8 +222,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 	}
 }
-
-#elif(0)
+#elif(1)
 	static uint16_t channels[5];
 	channels[0] = channels[1] = channels[2] = channels[3] = 0;
 	channels[0] = 0x0f00;
@@ -227,7 +234,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	lorawan_set_datarate(LORAWAN_DR_1);
 	lorawan_set_channelmask(channels);
 
-	const struct lorawan_join_config lw_config = {
+	const struct lorawan_join_config lw_config2 = {
 		.abp = {
 			0x26029100, /* devid */
 			app_skey,
@@ -237,18 +244,12 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		.dev_eui = dev_eui,
 		.mode =	LORAWAN_ACT_ABP
 	};
-	lorawan_join(&lw_config);
+	lorawan_join(&lw_config2);
 	while (1) {
 		lorawan_send(1,	txData,	MAX_TX_DATA_LEN, 0 /*LORAWAN_MSG_CONFIRMED*/);
 		k_sleep(K_MSEC(5000));
-
-	lora_dev = device_get_binding(DEFAULT_RADIO);
-	if (!lora_dev) {
-		LOG_ERR("%s	Device not found", DEFAULT_RADIO);
-		return;
 	}
 #elif	defined(TX_CW)
-
 	ret	= lora_config(lora_dev,	&config);
 	if (ret	< 0) {
 		LOG_ERR("LoRa config failed");
@@ -291,8 +292,8 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 		}
 	}
-}
 #endif
+}
 
 int	lora_push(char *key, char *value)
 {
