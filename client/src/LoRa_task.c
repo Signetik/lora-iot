@@ -216,10 +216,16 @@ void lora_thread(void *p1, void	*p2, void *p3)
 }
 
 #elif(0)
+	static uint16_t channels[5];
+	channels[0] = channels[1] = channels[2] = channels[3] = 0;
+	channels[0] = 0x0f00;
+	channels[4] = 0xff;
+
 	lorawan_start();
 	lorawan_set_class(LORAWAN_CLASS_C);
 	lorawan_enable_adr(false);
 	lorawan_set_datarate(LORAWAN_DR_1);
+	lorawan_set_channelmask(channels);
 
 	const struct lorawan_join_config lw_config = {
 		.abp = {
