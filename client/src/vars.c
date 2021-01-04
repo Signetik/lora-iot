@@ -129,7 +129,7 @@ VAR_STR_CREATE(lora_nwk_skey, 16, "");
 VAR_STR_CREATE(lora_app_eui, 8,	"");
 VAR_STR_CREATE(lora_dev_eui, 8,	"");
 VAR_STR_CREATE(lora_app_key, 16, "");
-uint32_t var_lora_dev_addr = 0x26029100;
+uint32_t var_lora_dev_addr = 0x26022001;
 
 // GPS Vars
 uint16_t var_gpsinterval =	0;
