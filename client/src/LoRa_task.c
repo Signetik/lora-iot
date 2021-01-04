@@ -223,6 +223,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 		else if	(var_enabled)
 		{		/* Block until data	arrives	or 5 seconds	passes */
+#if(0)			
 			len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000), &rssi, &snr);
 
 			if (len	< 0)
@@ -236,6 +237,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 				log_strdup(rxData),	rssi,	snr);
 				uart_send("+notify,lora:rx,base64:\r\n", 0);
 			}
+#endif
 		}
 		else
 		{
@@ -244,7 +246,6 @@ void lora_thread(void *p1, void	*p2, void *p3)
 			k_sleep(K_MSEC(1000));
 		}
 	}
-}
 #elif(1)
 	static uint16_t channels[5];
 	channels[0] = channels[1] = channels[2] = channels[3] = 0;
@@ -337,6 +338,7 @@ int	lora_push(char *key, char *value)
 		if ((data_len <= LORA_TX_BUF_SIZE) && (data_len	> 0))
 		{	
 			ret	= lora_send(lora_dev, buffer, data_len);
+			ret = lorawan_send(1, buffer, data_len, 0 /*LORAWAN_MSG_CONFIRMED*/);		
 		}
 	}
 	return ret;
