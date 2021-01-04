@@ -20,7 +20,7 @@
 #include <drivers/lora.h>
 #include <lorawan/lorawan.h>
 
-//#include <sys/base64.h>
+#include <sys/base64.h>
 
 #include <logging/log.h>
 
@@ -121,6 +121,20 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	return ret;
 }
 
+void lorawan_rx_data(uint8_t *buffer, int sz)
+{
+	uint8_t obuffer[64];
+	size_t obuffer_len = 64;
+
+	if (sz > 0) {
+		base64_encode(obuffer, obuffer_len, &obuffer_len, buffer, sz);
+
+		uart_send("+notify,lora:rx,base64:", 0);
+		uart_send(obuffer, obuffer_len);
+		uart_send("\r\n", 0);
+	}
+}
+
 /*
  * Public Functions
  */
@@ -176,6 +190,8 @@ void lora_thread(void *p1, void	*p2, void *p3)
 			lorawan_set_datarate(LORAWAN_DR_1);
 
 			lorawan_set_channelmask(channels);
+
+			lorawan_set_rxcb(lorawan_rx_data);
 
 			if (0 != lora_configure(&lw_config))
 			{
