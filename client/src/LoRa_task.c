@@ -42,6 +42,9 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE,	okay),
 
 LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
+K_SEM_DEFINE(sem_rx_cb,	0, 1);
+K_SEM_DEFINE(sem_lora_push,	0, 1);
+
 /*
  * Module Defines
  */
@@ -123,19 +126,21 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 
 void lorawan_rx_data(uint8_t *buffer, int sz)
 {
-	uint8_t obuffer[64];
+	uint8_t	obuffer[64];
 	size_t obuffer_len = 64;
 
-	if (sz > 0) {
-		base64_encode(obuffer, obuffer_len, &obuffer_len, buffer, sz);
-
+	if (sz > 0)	{
+		base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
+		
+		k_sem_take(&sem_rx_cb, K_FOREVER);
 		uart_send("+notify,lora:rx,base64:", 0);
 		uart_send(obuffer, obuffer_len);
 		uart_send("\r\n", 0);
+		k_sem_give(&sem_rx_cb);
 	}
 }
 
-#define FORCE_GPIO_1_7_HIGH 1
+#define	FORCE_GPIO_1_7_HIGH	1
 
 /*
  * Public Functions
@@ -149,11 +154,11 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	int	ret;
 	int	err;
 	int	record_number =	0;
-	char txData[MAX_TX_DATA_LEN] = {0x64, 0x01, 0x00, 0x00, 0x00, 0x0E, 0xE1, 0x39, 0x00, 0x00, 0x00, 0x00};
+	char txData[MAX_TX_DATA_LEN] = {0x64, 0x01,	0x00, 0x00,	0x00, 0x0E,	0xE1, 0x39,	0x00, 0x00,	0x00, 0x00};
 	uint8_t	rxData[MAX_RX_DATA_LEN]	= {0};
 
 	const struct device	*lora_dev;
-	const struct device *dev1;
+	const struct device	*dev1;
 
 	lora_dev = device_get_binding(DEFAULT_RADIO);
 	if (!lora_dev) 
@@ -162,9 +167,12 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		return;
 	}
 
+	k_sem_give(&sem_rx_cb);
+	k_sem_give(&sem_lora_push);
+
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
-#if defined(FORCE_GPIO_1_7_HIGH)
+#if	defined(FORCE_GPIO_1_7_HIGH)
 	dev1 = device_get_binding("GPIO_1");
 	gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
 	gpio_pin_set(dev1, 7,	1);
@@ -180,10 +188,10 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 		if (!var_connected && var_enabled) 
 		{
-			static uint16_t channels[5];
-			channels[0] = channels[1] = channels[2] = channels[3] = 0;
-			channels[0] = 0x0f00;
-			channels[4] = 0xff;
+			static uint16_t	channels[5];
+			channels[0]	= channels[1] =	channels[2]	= channels[3] =	0;
+			channels[0]	= 0x0f00;
+			channels[4]	= 0xff;
 
 			if (0 == lorawan_start())
 			{
@@ -255,10 +263,10 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 	}
 #elif(1)
-	static uint16_t channels[5];
-	channels[0] = channels[1] = channels[2] = channels[3] = 0;
-	channels[0] = 0x0f00;
-	channels[4] = 0xff;
+	static uint16_t	channels[5];
+	channels[0]	= channels[1] =	channels[2]	= channels[3] =	0;
+	channels[0]	= 0x0f00;
+	channels[4]	= 0xff;
 
 	lorawan_start();
 	lorawan_set_class(LORAWAN_CLASS_C);
@@ -266,9 +274,9 @@ void lora_thread(void *p1, void	*p2, void *p3)
 	lorawan_set_datarate(LORAWAN_DR_1);
 	lorawan_set_channelmask(channels);
 
-	const struct lorawan_join_config lw_config2 = {
+	const struct lorawan_join_config lw_config2	= {
 		.abp = {
-			0x26022001, /* devid */
+			0x26022001,	/* devid */
 			app_skey,
 			nwk_skey,
 			app_eui
@@ -332,7 +340,7 @@ int	lora_push(char *key, char *value)
 	int	ret	= -1;
 	uint8_t	buffer[LORA_TX_BUF_SIZE];
 	//uint32_t data_len;
-	size_t blen = sizeof(buffer);
+	size_t blen	= sizeof(buffer);
 	
 	const struct device	*lora_dev;
 	lora_dev = device_get_binding(DEFAULT_RADIO);
@@ -344,11 +352,14 @@ int	lora_push(char *key, char *value)
 	else
 	{
 		//data_len = snprintf(buffer,	sizeof(buffer),	"%s,%s", key, value);
-		ret = base64_decode(buffer, blen, &blen, &value[1], strlen(value)-2);
-		if ((ret == 0) && (blen <= LORA_TX_BUF_SIZE) && (blen > 0))
+		ret	= base64_decode(buffer,	blen, &blen, &value[1],	strlen(value)-2);
+		if ((ret ==	0) && (blen	<= LORA_TX_BUF_SIZE) &&	(blen >	0))
 		{	
+			k_sem_take(&sem_lora_push, K_FOREVER);
 			//ret	= lora_send(lora_dev, buffer, blen);
-			ret = lorawan_send(1, buffer, blen, 0 /*LORAWAN_MSG_CONFIRMED*/);		
+			ret	= lorawan_send(1, buffer, blen,	0 /*LORAWAN_MSG_CONFIRMED*/);	
+			k_sem_give(&sem_lora_push);
+
 		}
 	}
 	return ret;
