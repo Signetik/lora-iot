@@ -327,7 +327,8 @@ int	lora_push(char *key, char *value)
 {
 	int	ret	= -1;
 	uint8_t	buffer[LORA_TX_BUF_SIZE];
-	uint32_t data_len;
+	//uint32_t data_len;
+	size_t blen = sizeof(buffer);
 	
 	const struct device	*lora_dev;
 	lora_dev = device_get_binding(DEFAULT_RADIO);
@@ -338,11 +339,12 @@ int	lora_push(char *key, char *value)
 	}
 	else
 	{
-		data_len = snprintf(buffer,	sizeof(buffer),	"%s,%s", key, value);
-		if ((data_len <= LORA_TX_BUF_SIZE) && (data_len	> 0))
+		//data_len = snprintf(buffer,	sizeof(buffer),	"%s,%s", key, value);
+		ret = base64_decode(buffer, blen, &blen, &value[1], strlen(value)-2);
+		if ((ret == 0) && (blen <= LORA_TX_BUF_SIZE) && (blen > 0))
 		{	
-			ret	= lora_send(lora_dev, buffer, data_len);
-			ret = lorawan_send(1, buffer, data_len, 0 /*LORAWAN_MSG_CONFIRMED*/);		
+			//ret	= lora_send(lora_dev, buffer, blen);
+			ret = lorawan_send(1, buffer, blen, 0 /*LORAWAN_MSG_CONFIRMED*/);		
 		}
 	}
 	return ret;
