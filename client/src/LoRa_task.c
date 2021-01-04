@@ -162,6 +162,11 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 		if (!var_connected && var_enabled) 
 		{
+			static uint16_t channels[5];
+			channels[0] = channels[1] = channels[2] = channels[3] = 0;
+			channels[0] = 0x0f00;
+			channels[4] = 0xff;
+
 			if (0 == lorawan_start())
 			{
 				uart_send("+notify,lora:join,status:start\r\n",	0);
@@ -169,6 +174,8 @@ void lora_thread(void *p1, void	*p2, void *p3)
 			lorawan_set_class(LORAWAN_CLASS_C);
 			lorawan_enable_adr(false);
 			lorawan_set_datarate(LORAWAN_DR_1);
+
+			lorawan_set_channelmask(channels);
 
 			if (0 != lora_configure(&lw_config))
 			{
