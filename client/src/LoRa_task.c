@@ -135,6 +135,8 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 	}
 }
 
+#define FORCE_GPIO_1_7_HIGH 1
+
 /*
  * Public Functions
  */
@@ -162,10 +164,12 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
-	//dev1 = device_get_binding("GPIO_1");
-	//gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
-	//gpio_pin_set(dev1, 7,	1);
-#if	1
+#if defined(FORCE_GPIO_1_7_HIGH)
+	dev1 = device_get_binding("GPIO_1");
+	gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
+	gpio_pin_set(dev1, 7,	1);
+#endif
+#if	(1)
 
 	while (1)
 	{
