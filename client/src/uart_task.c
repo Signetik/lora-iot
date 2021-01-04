@@ -80,7 +80,7 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 	modem_state->uart_send = uart_send;
 
 	tty_init(&tty, uart);
-	tty_set_rx_timeout(&tty, 10);
+	tty_set_rx_timeout(&tty, 100);
 	tty_set_rx_buf(&tty, uart_buffer, sizeof(uart_buffer));
 
 	k_sem_give(&sem_tty);
@@ -123,7 +123,7 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 	{
 		process_bytes(modem_state, buffer, count);
 	}
-	k_sleep(K_MSEC(1000));
+	//k_sleep(K_MSEC(1000));
 	}
 }
 
