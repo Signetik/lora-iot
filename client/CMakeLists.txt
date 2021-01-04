@@ -33,5 +33,5 @@ set(sources
 
 # Main app
 target_sources(app PRIVATE ${sources})
-#target_sources(app PRIVATE _sigver.c)
+target_sources(app PRIVATE _sigver.c)
 

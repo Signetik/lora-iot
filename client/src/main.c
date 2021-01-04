@@ -14,14 +14,16 @@
 #include "lora_task.h"
 #include "uart_task.h"
 #include "vars.h"
-
+#include "version.h"
 
 void main(void)
 {
 	
 	vars_init();
 
-	
+    // Get Firmware Version string.
+    strncpy(var_firmware.data, GIT_TAG, var_firmware.size);
+		
 	// Start RTOS task threads.
 	uart_thread_start();
 	led_thread_start();
