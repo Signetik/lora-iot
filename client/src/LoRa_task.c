@@ -223,6 +223,10 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 		else if	(var_enabled)
 		{		/* Block until data	arrives	or 5 seconds	passes */
+#if(0)
+			lorawan_send(1,	txData,	MAX_TX_DATA_LEN, 0 /*LORAWAN_MSG_CONFIRMED*/);
+			k_sleep(K_MSEC(5000));
+#endif
 #if(0)			
 			len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000), &rssi, &snr);
 
