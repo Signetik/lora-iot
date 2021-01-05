@@ -12,6 +12,7 @@
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 #include <errno.h>
 #include <sys/printk.h>
 #include <sys/byteorder.h>
@@ -339,12 +340,18 @@ static struct bt_conn_auth_cb auth_cb_display =	{
 void bt_thread(void	*p1, void	*p2, void *p3)
 {
 	int	err;
+	uint8_t	buf[CONFIG_BT_DEVICE_NAME_MAX];
 
 	err	= bt_enable(NULL);
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
 		return;
 	}
+
+	// create advertised device	name from device name and ID
+
+	snprintf(buf, sizeof(buf), "%s-%s",	CONFIG_BT_DEVICE_NAME, var_devid.data );
+	bt_set_name(buf);
 
 	bt_ready();
 
