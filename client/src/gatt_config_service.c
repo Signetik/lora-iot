@@ -434,6 +434,8 @@ static ssize_t save_configuration_characteristic(struct	bt_conn	*conn,	const str
 			uint8_t	flags)
 {
 	// write to	NVS	here.
+	save_vars_config();
+
 	return len;
 }
 

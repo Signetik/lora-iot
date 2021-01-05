@@ -711,6 +711,16 @@ void* reboot(void *unused)
 	return NULL;
 }
 
+int	save_vars_config(void)
+{
+	int	ret	= -1;
+
+	ret	= atoi((char *)	flash_save(NULL));
+
+	return ret;
+}
+
+
 /****************************************
  *			 Sensor	API	Commands		   *
  ****************************************/
