@@ -13,6 +13,7 @@
 #include "bt_task.h"
 #include "lora_task.h"
 #include "uart_task.h"
+#include "wdt_task.h"
 #include "vars.h"
 #include "version.h"
 
@@ -21,15 +22,15 @@ void main(void)
 	
 	vars_init();
 
-    // Get Firmware Version string.
-    strncpy(var_firmware.data, GIT_TAG, var_firmware.size);
+	// Get Firmware	Version	string.
+	strncpy(var_firmware.data, GIT_TAG,	var_firmware.size);
 		
 	// Start RTOS task threads.
+	wdt_thread_start();	// @todo Should	this start before other	threads??
 	uart_thread_start();
 	led_thread_start();
 	bt_thread_start();
 	lora_thread_start();
-//	wdt_thread_start();	// @todo Should	this start before other	threads??
 
 	while(1)
 	{
