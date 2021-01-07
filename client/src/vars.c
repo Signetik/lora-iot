@@ -49,6 +49,7 @@ static int vars_flash_init(void);
 static int vars_flash_read(int id, void	*buffer, int buf_sz);
 static void* flash_save(void* data);
 static void* flash_load(void);
+static void* flash_clear(void);
 
 #define	VAR_STR_CREATE(_name_,_size_,_default_)	\
 	uint8_t	_name_[_size_]	= _default_; \
@@ -340,6 +341,7 @@ static struct key_setget_s setget[]	= {
 //	{"at", vtype_str, vdir_write, NULL,	(setter)at_set,	NULL, id_none},
 	{"reboot", vtype_boolean, vdir_write, NULL,	(setter)reboot,	NULL, id_none},
 	{"save", vtype_boolean,	vdir_readwrite,	NULL, (setter)flash_save, (getter)flash_load, id_none},
+	{"flashclear", vtype_boolean, vdir_readwrite, NULL, (setter)flash_clear, NULL, id_none},
 
 	// LoRa
 	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,	NULL,	NULL, id_lora_auth},
@@ -457,6 +459,12 @@ static int vars_flash_write(int	id,	void *buffer, int buf_sz)
 	}
 
 	return 0;
+}
+
+static void* flash_clear(void)
+{
+	nvs_clear(&fs);
+	return "1";
 }
 
 static void* flash_load(void)
