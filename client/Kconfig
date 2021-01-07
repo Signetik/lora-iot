@@ -1,0 +1,26 @@
+#
+# Copyright (c) 2019 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
+#
+
+menu "Signetik Client"
+
+choice SENSOR_POLLING_METHOD_UART_FORMAT
+	bool "Sensor polling method UART format"
+	default SENSOR_POLLING_METHOD_UART_PUSH
+config SENSOR_POLLING_METHOD_UART_BINARY
+	bool "Sensor UART binary modem"
+config SENSOR_POLLING_METHOD_UART_PUSH
+	bool "Sensor UART push sensor"
+endchoice
+
+module = SIGNETIK_CLIENT
+module-dep = LOG
+module-str = Signetik Client
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+endmenu
+
+menu "Zephyr Kernel"
+source "$ZEPHYR_BASE/Kconfig.zephyr"
+endmenu
