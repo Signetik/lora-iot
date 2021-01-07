@@ -689,7 +689,12 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 	if (setget[hindex].set)	{
 		char * result =	setget[hindex].set(value);
 		if (*value_str == NULL)	{
-			*value_str = result;
+			if (result == NULL) {
+				*value_str = value;
+			}
+			else {
+				*value_str = result;
+			}
 		}
 	}
 
