@@ -497,7 +497,8 @@ static void* flash_load(void)
 				case vtype_binary:
 					vbin = (struct var_bin_s*)setget[hindex].variable;
 					rc = vars_flash_read(setget[hindex].save_id, vbin->data, vbin->maxsize);
-					vbin->length = rc;
+					if (rc >= 0)
+						vbin->length = rc;
 					break;
 				default:
 					LOG_ERR("ERROR reading of type is not supported");
