@@ -89,7 +89,7 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	//	Authentication by personalization
 		join_cfg->mode = LORAWAN_ACT_ABP;
 		join_cfg->dev_eui =	var_lora_dev_eui.data;			// var_lora_dev_eui.data;
-		join_cfg->abp.dev_addr = var_lora_dev_addr;			// device address
+		join_cfg->abp.dev_addr = *((uint32_t*)var_lora_dev_addr.data);			// device address
 		join_cfg->abp.app_skey = var_lora_app_skey.data;		// var_lora_app_skey.data;
 		join_cfg->abp.nwk_skey = var_lora_nwk_skey.data;		// var_lora_nwk_skey.data;
 		join_cfg->abp.app_eui =	var_lora_dev_eui.data;			// var_lora_app_eui.data;

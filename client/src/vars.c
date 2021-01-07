@@ -136,7 +136,7 @@ VAR_BIN_CREATE(lora_nwk_skey, 16, 16, VAR_BIN_PROTECT({0x0B, 0x30, 0x52, 0x51, 0
 VAR_BIN_CREATE(lora_app_eui, 8, 8, VAR_BIN_PROTECT({0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x03, 0x31, 0xC9}));
 VAR_BIN_CREATE(lora_dev_eui, 8, 8, VAR_BIN_PROTECT({0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01}));
 VAR_BIN_CREATE(lora_app_key, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
-uint32_t var_lora_dev_addr = 0x26022001;
+VAR_BIN_CREATE(lora_dev_addr, 4, 4, VAR_BIN_PROTECT({0x01, 0x20, 0x02, 0x26}));
 
 // GPS Vars
 uint16_t var_gpsinterval =	0;
@@ -350,7 +350,7 @@ static struct key_setget_s setget[]	= {
 	// LoRa	OTAA
 	{"appkey",	vtype_binary, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
 	{"appeui",	vtype_binary, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
-	{"devaddr",	vtype_uint32, vdir_readwrite, &var_lora_dev_addr,	NULL, NULL,	id_devaddr},
+	{"devaddr",	vtype_binary, vdir_readwrite, &var_lora_dev_addr,	NULL, NULL,	id_devaddr},
 
 	// GPS API (TODO: C.Lawson -- Finish!)
 //	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},
