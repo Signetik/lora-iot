@@ -56,6 +56,13 @@ static void* flash_load(void);
 		_name_,	sizeof(_default_), sizeof(_name_) \
 	};
 
+#define VAR_BIN_PROTECT(...) __VA_ARGS__ 
+#define	VAR_BIN_CREATE(_name_,_minsize_,_maxsize_,_default_)	\
+	uint8_t	_name_[_maxsize_]	= _default_; \
+	struct var_bin_s var_##_name_ =	{ \
+		_name_,	_maxsize_, _minsize_, _maxsize_ \
+	};
+
 bool var_echo =	true;
 
 // Variables
@@ -124,11 +131,11 @@ struct var_str_s var_report[VAR_MAX_REPORTS] = {
 
 // LoRa	Vars
 VAR_STR_CREATE(lora_auth, 5, "abp");
-VAR_STR_CREATE(lora_app_skey, 16, "");
-VAR_STR_CREATE(lora_nwk_skey, 16, "");
-VAR_STR_CREATE(lora_app_eui, 8,	"");
-VAR_STR_CREATE(lora_dev_eui, 8,	"");
-VAR_STR_CREATE(lora_app_key, 16, "");
+VAR_BIN_CREATE(lora_app_skey, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
+VAR_BIN_CREATE(lora_nwk_skey, 16, 16, VAR_BIN_PROTECT({0x0B, 0x30, 0x52, 0x51, 0xA6, 0x0C, 0x52, 0x11, 0x72, 0x32, 0x85, 0xD1, 0xFB, 0x2E, 0xF8, 0x39}));
+VAR_BIN_CREATE(lora_app_eui, 8, 8, VAR_BIN_PROTECT({0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x03, 0x31, 0xC9}));
+VAR_BIN_CREATE(lora_dev_eui, 8, 8, VAR_BIN_PROTECT({0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01}));
+VAR_BIN_CREATE(lora_app_key, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
 uint32_t var_lora_dev_addr = 0x26022001;
 
 // GPS Vars
@@ -214,6 +221,7 @@ enum setget_type {
 	vtype_uint16,
 	vtype_uint32,
 	vtype_str,
+	vtype_binary,
 	vtype_custom
 };
 
@@ -335,13 +343,13 @@ static struct key_setget_s setget[]	= {
 
 	// LoRa
 	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,	NULL,	NULL, id_lora_auth},
-	{"deveui",	vtype_str, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
+	{"deveui",	vtype_binary, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
 	// LoRa	ABP
-	{"appskey",	vtype_str, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
-	{"nwkskey",	vtype_str,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
+	{"appskey",	vtype_binary, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
+	{"nwkskey",	vtype_binary,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
 	// LoRa	OTAA
-	{"appkey",	vtype_str, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
-	{"appeui",	vtype_str, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
+	{"appkey",	vtype_binary, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
+	{"appeui",	vtype_binary, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
 	{"devaddr",	vtype_uint32, vdir_readwrite, &var_lora_dev_addr,	NULL, NULL,	id_devaddr},
 
 	// GPS API (TODO: C.Lawson -- Finish!)
@@ -456,6 +464,7 @@ static void* flash_load(void)
 	int	rc = 0;
 	int	hindex = 0;
 	struct var_str_s *vstr;
+	struct var_bin_s *vbin;
 
 	while (setget[hindex].key) {
 		if (setget[hindex].save_id != id_none) {
@@ -477,6 +486,11 @@ static void* flash_load(void)
 					rc = vars_flash_read(setget[hindex].save_id, vstr->data, vstr->size);
 					vstr->length = strlen(vstr->data);
 					break;
+				case vtype_binary:
+					vbin = (struct var_bin_s*)setget[hindex].variable;
+					rc = vars_flash_read(setget[hindex].save_id, vbin->data, vbin->maxsize);
+					vbin->length = rc;
+					break;
 				default:
 					LOG_ERR("ERROR reading of type is not supported");
 					break;
@@ -497,6 +511,7 @@ static void* flash_save(void* data)
 	int	rc = 0;
 	int	hindex = 0;
 	struct var_str_s *vstr;
+	struct var_bin_s *vbin;
 
 	while (setget[hindex].key && rc	>= 0) {
 		if (setget[hindex].save_id != id_none) {
@@ -518,8 +533,12 @@ static void* flash_save(void* data)
 					vstr = (struct var_str_s*)setget[hindex].variable;
 					rc = vars_flash_write(setget[hindex].save_id, vstr->data, vstr->length + 1);
 					break;
+				case vtype_binary:
+					vbin = (struct var_bin_s*)setget[hindex].variable;
+					rc = vars_flash_write(setget[hindex].save_id, vbin->data, vbin->length);
+					break;
 				default:
-					LOG_ERR("ERROR reading of type is not supported");
+					LOG_ERR("ERROR writing of type is not supported");
 					break;
 			}
 		}
@@ -562,12 +581,28 @@ int	list_next_command(char *command)
 	return hindex =	0;
 }
 
+static int hexdigit_to_value(uint8_t digit)
+{
+	if (digit >= '0' && digit <= '9') {
+		return digit - '0';
+	}
+	if (digit >= 'a' && digit <= 'f') {
+		return digit - 'a' + 10;
+	}
+	if (digit >= 'A' && digit <= 'F') {
+		return digit - 'A' + 10;
+	}
+	return -1;
+}
+
 enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 {
 	int	hindex = setget_find_key(key);
-	static char	buffer[32];
+	static char	buffer[64];
 	struct var_str_s *vstr;
+	struct var_bin_s *vbin;
 	void *variable = NULL;
+	int digval;
 
 	if (hindex < 0)	{
 		return verr_inv_key;
@@ -611,6 +646,33 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 				vstr->length = strlen(vstr->data);
 				*value_str = vstr->data;
 				break;
+			case vtype_binary:
+				vbin = (struct var_bin_s*)setget[hindex].variable;
+				/* value should be of the form 0xAABBCCDD... so the length should be 2 + 2 * bytes */
+				vlen = strlen(value) - 2;
+				if (vlen < vbin->minsize*2)
+					return verr_inv_value;
+				if (vlen > vbin->maxsize*2)
+					return verr_inv_value;
+				if (value[0] != '0' || value[1] != 'x')
+					return verr_inv_value;
+				vlen = vlen / 2;
+				for (int index = 0 ; index < vlen ; index++) {
+					/* Convert to hex value */
+					digval = hexdigit_to_value(value[2 + index*2 + 0]);
+					if (digval < 0)
+						return verr_inv_value;
+					buffer[index] = digval * 16;
+					digval = hexdigit_to_value(value[2 + index*2 + 1]);
+					if (digval < 0)
+						return verr_inv_value;
+					buffer[index] += digval;
+				}
+				memcpy(vbin->data, buffer, vlen);
+				vbin->length = vlen;
+				//strcpy(buffer, value);
+				*value_str = value;
+				break;
 			default:
 				return verr_inv_type;
 		}
@@ -629,9 +691,11 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 {
 	int	hindex = setget_find_key(key);
-	static char	buffer[32];
+	static char	buffer[64];
 	struct var_str_s *vstr;
+	struct var_bin_s *vbin;
 	void *variable = NULL;
+	int index;
 
 	if (hindex < 0)	{
 		return verr_inv_key;
@@ -692,6 +756,20 @@ enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 			if (variable) {
 				vstr = (struct var_str_s*)variable;
 				*value_str = vstr->data;
+			}
+			if (setget[hindex].get)	{
+				*value_str = (char*)setget[hindex].get();
+			}
+			break;
+		case vtype_binary:
+			if (variable) {
+				vbin = (struct var_bin_s*)variable;
+				buffer[0] = '0';
+				buffer[1] = 'x';
+				for (index = 0 ;index < vbin->length ; index++) {
+					sprintf(&buffer[index*2+2], "%02x", vbin->data[index]);
+				}
+				*value_str = buffer;
 			}
 			if (setget[hindex].get)	{
 				*value_str = (char*)setget[hindex].get();
