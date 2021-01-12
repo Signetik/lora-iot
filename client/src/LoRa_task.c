@@ -25,7 +25,7 @@
 #include <logging/log.h>
 
 #include "signetik.h"
-//#include "wdt_task.h"
+#include "wdt_task.h"
 #include "lora_task.h"
 #include "uart_task.h"
 #include "vars.h"
@@ -50,10 +50,6 @@ K_SEM_DEFINE(sem_lora_push,	0, 1);
  */
 #define	LORA_TX_BUF_SIZE 255
 
-#define	APP_COAP_SEND_INTERVAL_MS K_MSEC(5000)
-#define	APP_COAP_MAX_MSG_LEN (2048 + 16)
-#define	APP_COAP_VERSION 1
-
 #define	MAX_TX_DATA_LEN	12
 #define	MAX_RX_DATA_LEN	255
 //#define	TX_CW
@@ -61,7 +57,6 @@ K_SEM_DEFINE(sem_lora_push,	0, 1);
 /*
  * Module Variables.
  */
-uint8_t	thread_id;
 
 struct lora_modem_config config	= 
 {
@@ -147,6 +142,7 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
  */
 void lora_thread(void *p1, void	*p2, void *p3)
 {
+	uint8_t	thread_id;
 	int16_t	rssi;
 	int8_t snr;
 	int	len;
@@ -172,6 +168,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
+
 #if	defined(FORCE_GPIO_1_7_HIGH)
 	dev1 = device_get_binding("GPIO_1");
 	gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
@@ -184,7 +181,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		LOG_DBG("LoRa Thread loop...");
 
 		// Feed	WDT	(must use assigned thread ID).
-//		wdt_feed_watchdog(thread_id);
+		wdt_feed_watchdog(thread_id);
 
 		if (!var_connected && var_enabled) 
 		{

@@ -29,10 +29,9 @@
 #include <logging/log.h>
 
 #include "signetik.h"
-//#include "wdt_task.h"
+#include "wdt_task.h"
 #include "bt_task.h"
 #include "vars.h"
-//#include "cts.h"
 
 /*
  * Extract devicetree configuration.
@@ -50,7 +49,8 @@ LOG_MODULE_REGISTER(bt_task,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 /*
  * Module Variables.
  */
-
+static uint8_t	thread_id;
+#if	0
 /* Custom Service Variables	*/
 /*	   xxxx								*/
 /* 6a3a1400-5bd7-440d-b610-8019d41aa7f9	*/
@@ -260,15 +260,11 @@ BT_GATT_SERVICE_DEFINE(vnd_svc,
 				   BT_GATT_PERM_WRITE, NULL,
 				   write_without_rsp_vnd, &vnd_value),
 );
-
+#endif
 static const struct	bt_data	ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
-			  BT_UUID_16_ENCODE(BT_UUID_HRS_VAL),
-			  BT_UUID_16_ENCODE(BT_UUID_BAS_VAL),
-			  BT_UUID_16_ENCODE(BT_UUID_CTS_VAL)),
 	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
-	BT_UUID_128_ENCODE(0x6a3a1400, 0x5bd7, 0x440d, 0xb610, 0x08019d41aa7f9))
+	BT_UUID_128_ENCODE(0x1ff71400, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d))
 };
 
 static void	connected(struct bt_conn *conn,	uint8_t	err)
@@ -357,33 +353,19 @@ void bt_thread(void	*p1, void	*p2, void *p3)
 
 	bt_conn_cb_register(&conn_callbacks);
 	bt_conn_auth_cb_register(&auth_cb_display);
+
 	// Register	with WDT.
-//	thread_id =	wdt_register_thread();
+	thread_id =	wdt_register_thread();
 
 	/* Implement notification. At the moment there is no suitable way
 	 * of starting delayed work	so we do it	here
 	 */
 	while (1) 
 	{
+		// Feed	WDT	(must use assigned thread ID).
+		wdt_feed_watchdog(thread_id);
 		k_sleep(K_MSEC(1000));
 
-		/* Vendor indication simulation	*/
-			if (indicating)	
-			{
-				continue;
-			}
-
-			ind_params.attr	= &vnd_svc.attrs[2];
-			ind_params.func	= indicate_cb;
-			ind_params.destroy = indicate_destroy;
-			ind_params.data	= &indicating;
-			ind_params.len = sizeof(indicating);
-
-			if (bt_gatt_indicate(NULL, &ind_params)	== 0) 
-			{
-				indicating = 1U;
-			}
-	
 	}
 }
 
