@@ -150,6 +150,9 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		return;
 	}
 
+	// Register	with WDT.
+	thread_id =	wdt_register_thread();
+
 	k_sem_give(&sem_rx_cb);
 	k_sem_give(&sem_lora_push);
 
