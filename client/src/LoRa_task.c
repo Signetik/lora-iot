@@ -345,7 +345,16 @@ int	lora_push(char *key, char *value)
 		{	
 			k_sem_take(&sem_lora_push, K_FOREVER);
 			//ret	= lora_send(lora_dev, buffer, blen);
+			uart_send("+notify,lora:tx,status:send\r\n", 0);
 			ret	= lorawan_send(1, buffer, blen,	0 /*LORAWAN_MSG_CONFIRMED*/);	
+			if (0 == ret)
+			{
+				uart_send("+notify,lora:tx,status:complete\r\n", 0);
+			}
+			else
+			{
+				uart_send("+notify,lora:tx,status:error\r\n", 0);
+			}
 			k_sem_give(&sem_lora_push);
 
 		}
