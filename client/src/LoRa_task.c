@@ -106,6 +106,24 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	return ret;
 }
 
+void lorawan_tx_data(bool success, uint32_t channel, uint8_t data_rate)
+{
+    char status_str[16];
+
+    snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d", channel, data_rate);
+
+    if (success) {
+        uart_send("+notify,lora:tx,status:success,", 0);
+        uart_send(status_str, 0);
+        uart_send("\r\n", 0);
+    }
+    else {
+        uart_send("+notify,lora:tx,status:fail,", 0);
+        uart_send(status_str, 0);
+        uart_send("\r\n", 0);
+    }
+}
+
 void lorawan_rx_data(uint8_t *buffer, int sz)
 {
 	uint8_t	obuffer[64];
@@ -190,6 +208,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 			lorawan_set_channelmask(channels);
 
+			lorawan_set_txcb(lorawan_tx_data);
 			lorawan_set_rxcb(lorawan_rx_data);
 
 			if (0 != lora_configure(&lw_config))
