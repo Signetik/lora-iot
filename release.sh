@@ -25,7 +25,7 @@ echo "[${GIT_TAG}:${GIT_Z_TAG}]"
 if [ ${GIT_TAG} == ${GIT_Z_TAG} ] ; then
     vername=${GIT_TAG}${GIT_DIFF}${GIT_Z_DIFF}
 else
-    vername=${GIT_TAG}${GIT_DIFF}-${GIT_Z_TAG}${GIT_Z_DIFF}
+    vername=${GIT_TAG}${GIT_DIFF}-z${GIT_Z_TAG}${GIT_Z_DIFF}
 fi
 cp ${HEX} siglrn_${vername}.hex
 echo "HEX file siglrn_${vername} is for flashing locally"
