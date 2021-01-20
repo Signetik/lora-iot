@@ -57,11 +57,11 @@ static void* flash_clear(void);
 		_name_,	sizeof(_default_), sizeof(_name_) \
 	};
 
-#define VAR_BIN_PROTECT(...) __VA_ARGS__ 
+#define	VAR_BIN_PROTECT(...) __VA_ARGS__ 
 #define	VAR_BIN_CREATE(_name_,_minsize_,_maxsize_,_default_)	\
 	uint8_t	_name_[_maxsize_]	= _default_; \
 	struct var_bin_s var_##_name_ =	{ \
-		_name_,	_maxsize_, _minsize_, _maxsize_ \
+		_name_,	_maxsize_, _minsize_, _maxsize_	\
 	};
 
 bool var_echo =	true;
@@ -131,13 +131,17 @@ struct var_str_s var_report[VAR_MAX_REPORTS] = {
 };
 
 // LoRa	Vars
+bool var_lora_adr =	false;
+uint8_t	var_lora_datarate	= 1;
+VAR_STR_CREATE(lora_class, 2, "c");
 VAR_STR_CREATE(lora_auth, 5, "abp");
 VAR_BIN_CREATE(lora_app_skey, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
 VAR_BIN_CREATE(lora_nwk_skey, 16, 16, VAR_BIN_PROTECT({0x0B, 0x30, 0x52, 0x51, 0xA6, 0x0C, 0x52, 0x11, 0x72, 0x32, 0x85, 0xD1, 0xFB, 0x2E, 0xF8, 0x39}));
-VAR_BIN_CREATE(lora_app_eui, 8, 8, VAR_BIN_PROTECT({0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x03, 0x31, 0xC9}));
-VAR_BIN_CREATE(lora_dev_eui, 8, 8, VAR_BIN_PROTECT({0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01}));
-VAR_BIN_CREATE(lora_app_key, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
-VAR_BIN_CREATE(lora_dev_addr, 4, 4, VAR_BIN_PROTECT({0x01, 0x20, 0x02, 0x26}));
+VAR_BIN_CREATE(lora_app_eui, 8,	8, VAR_BIN_PROTECT({0x70, 0xB3,	0xD5, 0x7E,	0xD0, 0x03,	0x31, 0xC9}));
+VAR_BIN_CREATE(lora_dev_eui, 8,	8, VAR_BIN_PROTECT({0x00, 0x00,	0x00, 0x00,	0x00, 0x00,	0x0a, 0x01}));
+VAR_BIN_CREATE(lora_app_key, 16, 16, VAR_BIN_PROTECT({0x6F,	0x7B, 0x80,	0xF7, 0xE4,	0xD0, 0xB9,	0xE5, 0x1F,	0xE9, 0xF8,	0x97, 0x64,	0x15, 0xBD,	0xD7}));
+VAR_BIN_CREATE(lora_dev_addr, 4, 4,	VAR_BIN_PROTECT({0x01, 0x20, 0x02, 0x26}));
+VAR_BIN_CREATE(lora_chan_mask, 10, 10, VAR_BIN_PROTECT({0x00,0x0f, 0x00,0x00, 0x00,0x00, 0x00,0x00,	0xff,0x00}));
 
 // GPS Vars
 uint16_t var_gpsinterval =	0;
@@ -249,13 +253,17 @@ enum var_save_id {
 	id_queue3		= 13,
 	id_queue4		= 14,
 	id_queue5		= 15,
-	id_lora_auth,
-	id_appskey,
-	id_nwkskey,
-	id_appeui,
-	id_deveui,
-	id_appkey,
-	id_devaddr
+	id_lora_auth	= 16,
+	id_appskey		= 17,
+	id_nwkskey		= 18,
+	id_appeui		= 19,
+	id_deveui		= 20,
+	id_appkey		= 21,
+	id_devaddr		= 22,
+	id_lora_class	= 23,
+	id_lora_adr		= 24,
+	id_datarate		= 25,
+	id_chan_mask	= 26
 };
 
 struct key_setget_s	{
@@ -341,11 +349,15 @@ static struct key_setget_s setget[]	= {
 //	{"at", vtype_str, vdir_write, NULL,	(setter)at_set,	NULL, id_none},
 	{"reboot", vtype_boolean, vdir_write, NULL,	(setter)reboot,	NULL, id_none},
 	{"save", vtype_boolean,	vdir_readwrite,	NULL, (setter)flash_save, (getter)flash_load, id_none},
-	{"flashclear", vtype_boolean, vdir_readwrite, NULL, (setter)flash_clear, NULL, id_none},
+	{"flashclear", vtype_boolean, vdir_readwrite, NULL,	(setter)flash_clear, NULL, id_none},
 
 	// LoRa
-	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,	NULL,	NULL, id_lora_auth},
+	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,			NULL, NULL,	id_lora_auth},
+	{"class",	vtype_str,	vdir_readwrite,	&var_lora_class,		NULL, NULL,	id_lora_class},
 	{"deveui",	vtype_binary, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
+	{"adrenabled", vtype_boolean, vdir_readwrite,  &var_lora_adr,	NULL, NULL,	id_lora_adr},
+	{"chanmask", vtype_binary, vdir_readwrite, &var_lora_chan_mask,	NULL, NULL,	id_chan_mask},
+	{"datarate", vtype_uint8, vdir_readwrite, &var_lora_datarate,	NULL, NULL,	id_datarate},
 	// LoRa	ABP
 	{"appskey",	vtype_binary, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
 	{"nwkskey",	vtype_binary,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
@@ -592,13 +604,13 @@ int	list_next_command(char *command)
 
 static int hexdigit_to_value(uint8_t digit)
 {
-	if (digit >= '0' && digit <= '9') {
+	if (digit >= '0' &&	digit <= '9') {
 		return digit - '0';
 	}
-	if (digit >= 'a' && digit <= 'f') {
+	if (digit >= 'a' &&	digit <= 'f') {
 		return digit - 'a' + 10;
 	}
-	if (digit >= 'A' && digit <= 'F') {
+	if (digit >= 'A' &&	digit <= 'F') {
 		return digit - 'A' + 10;
 	}
 	return -1;
@@ -611,7 +623,7 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 	struct var_str_s *vstr;
 	struct var_bin_s *vbin;
 	void *variable = NULL;
-	int digval;
+	int	digval;
 
 	if (hindex < 0)	{
 		return verr_inv_key;
@@ -657,21 +669,21 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 				break;
 			case vtype_binary:
 				vbin = (struct var_bin_s*)setget[hindex].variable;
-				/* value should be of the form 0xAABBCCDD... so the length should be 2 + 2 * bytes */
+				/* value should	be of the form 0xAABBCCDD... so	the	length should be 2 + 2 * bytes */
 				vlen = strlen(value) - 2;
 				if (vlen < vbin->minsize*2)
 					return verr_inv_value;
 				if (vlen > vbin->maxsize*2)
 					return verr_inv_value;
-				if (value[0] != '0' || value[1] != 'x')
+				if (value[0] !=	'0'	|| value[1]	!= 'x')
 					return verr_inv_value;
-				vlen = vlen / 2;
-				for (int index = 0 ; index < vlen ; index++) {
-					/* Convert to hex value */
+				vlen = vlen	/ 2;
+				for	(int index = 0 ; index < vlen ;	index++) {
+					/* Convert to hex value	*/
 					digval = hexdigit_to_value(value[2 + index*2 + 0]);
 					if (digval < 0)
 						return verr_inv_value;
-					buffer[index] = digval * 16;
+					buffer[index] =	digval * 16;
 					digval = hexdigit_to_value(value[2 + index*2 + 1]);
 					if (digval < 0)
 						return verr_inv_value;
@@ -690,7 +702,7 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 	if (setget[hindex].set)	{
 		char * result =	setget[hindex].set(value);
 		if (*value_str == NULL)	{
-			if (result == NULL) {
+			if (result == NULL)	{
 				*value_str = value;
 			}
 			else {
@@ -709,7 +721,7 @@ enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 	struct var_str_s *vstr;
 	struct var_bin_s *vbin;
 	void *variable = NULL;
-	int index;
+	int	index;
 
 	if (hindex < 0)	{
 		return verr_inv_key;
@@ -778,10 +790,10 @@ enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 		case vtype_binary:
 			if (variable) {
 				vbin = (struct var_bin_s*)variable;
-				buffer[0] = '0';
-				buffer[1] = 'x';
-				for (index = 0 ;index < vbin->length ; index++) {
-					sprintf(&buffer[index*2+2], "%02x", vbin->data[index]);
+				buffer[0] =	'0';
+				buffer[1] =	'x';
+				for	(index = 0 ;index <	vbin->length ; index++)	{
+					sprintf(&buffer[index*2+2],	"%02x",	vbin->data[index]);
 				}
 				*value_str = buffer;
 			}

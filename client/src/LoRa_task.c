@@ -79,6 +79,26 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 {
 	int	ret	= 0;
 
+	// determine Class operation
+	if (strcmp(var_lora_class.data,	"a") ==	0)
+	{
+		lorawan_set_class(LORAWAN_CLASS_A);
+	}
+	else if	(strcmp(var_lora_class.data, "c") == 0)
+	{
+		lorawan_set_class(LORAWAN_CLASS_C);
+	}
+	else
+	{
+		ret	= -1;
+	}
+
+	// Adaptive	data rate selection
+	lorawan_enable_adr(var_lora_adr);
+
+	// Channel mask	selection
+	lorawan_set_channelmask(var_lora_chan_mask.data);
+
 	if (strcmp(var_lora_auth.data, "abp") == 0)
 	{
 	//	Authentication by personalization
@@ -106,22 +126,22 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	return ret;
 }
 
-void lorawan_tx_data(bool success, uint32_t channel, uint8_t data_rate)
+void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 {
-    char status_str[16];
+	char status_str[16];
 
-    snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d", channel, data_rate);
+	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
 
-    if (success) {
-        uart_send("+notify,lora:tx,status:success,", 0);
-        uart_send(status_str, 0);
-        uart_send("\r\n", 0);
-    }
-    else {
-        uart_send("+notify,lora:tx,status:fail,", 0);
-        uart_send(status_str, 0);
-        uart_send("\r\n", 0);
-    }
+	if (success) {
+		uart_send("+notify,lora:tx,status:success,", 0);
+		uart_send(status_str, 0);
+		uart_send("\r\n", 0);
+	}
+	else {
+		uart_send("+notify,lora:tx,status:fail,", 0);
+		uart_send(status_str, 0);
+		uart_send("\r\n", 0);
+	}
 }
 
 void lorawan_rx_data(uint8_t *buffer, int sz)
@@ -193,20 +213,10 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 		if (!var_connected && var_enabled) 
 		{
-			static uint16_t	channels[5];
-			channels[0]	= channels[1] =	channels[2]	= channels[3] =	0;
-			channels[0]	= 0x0f00;
-			channels[4]	= 0xff;
-
 			if (0 == lorawan_start())
 			{
 				uart_send("+notify,lora:join,status:start\r\n",	0);
 			}
-			lorawan_set_class(LORAWAN_CLASS_C);
-			lorawan_enable_adr(false);
-			lorawan_set_datarate(LORAWAN_DR_1);
-
-			lorawan_set_channelmask(channels);
 
 			lorawan_set_txcb(lorawan_tx_data);
 			lorawan_set_rxcb(lorawan_rx_data);

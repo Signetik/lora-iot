@@ -159,6 +159,79 @@ static ssize_t write_lora_auth
 	uint8_t	flags
 	);
 
+static ssize_t read_lora_class
+	(
+	struct	bt_conn	*conn, 
+	const struct bt_gatt_attr *attr,
+	void *buf, uint16_t	len,
+	uint16_t offset
+	);
+
+static ssize_t write_lora_class
+	(
+	struct bt_conn *conn,
+	const struct bt_gatt_attr *attr,
+	const void *buf, 
+	uint16_t len, 
+	uint16_t offset,
+	uint8_t	flags
+	);
+
+static ssize_t read_lora_adr
+	(
+	struct	bt_conn	*conn, 
+	const struct bt_gatt_attr *attr,
+	void *buf, uint16_t	len,
+	uint16_t offset
+	);
+
+static ssize_t write_lora_adr
+	(
+	struct bt_conn *conn,
+	const struct bt_gatt_attr *attr,
+	const void *buf, 
+	uint16_t len, 
+	uint16_t offset,
+	uint8_t	flags
+	);
+
+static ssize_t read_lora_datarate
+	(
+	struct	bt_conn	*conn, 
+	const struct bt_gatt_attr *attr,
+	void *buf, uint16_t	len,
+	uint16_t offset
+	);
+
+static ssize_t write_lora_datarate
+	(
+	struct bt_conn *conn,
+	const struct bt_gatt_attr *attr,
+	const void *buf, 
+	uint16_t len, 
+	uint16_t offset,
+	uint8_t	flags
+	);
+
+static ssize_t read_lora_chan_mask
+	(
+	struct	bt_conn	*conn, 
+	const struct bt_gatt_attr *attr,
+	void *buf, uint16_t	len,
+	uint16_t offset
+	);
+
+static ssize_t write_lora_chan_mask
+	(
+	struct bt_conn *conn,
+	const struct bt_gatt_attr *attr,
+	const void *buf, 
+	uint16_t len, 
+	uint16_t offset,
+	uint8_t	flags
+	);
+
+
 static ssize_t save_configuration_characteristic
 	(
 	struct	bt_conn	*conn,	
@@ -211,6 +284,22 @@ static struct bt_uuid_128 gatt_lora_auth_characteristic_uuid	 = BT_UUID_INIT_128
 static struct bt_uuid_128 gatt_save_configuration_characteristic_uuid	 = BT_UUID_INIT_128(
 	BT_UUID_128_ENCODE(0x1ff71407, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
 
+/* 1ff71408-addc-49da-8bb2-a7026e65426d	*/
+static struct bt_uuid_128 gatt_lora_class_characteristic_uuid	 = BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x1ff71408, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
+
+/* 1ff71409-addc-49da-8bb2-a7026e65426d	*/
+static struct bt_uuid_128 gatt_lora_chan_mask_characteristic_uuid	 = BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x1ff71409, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
+
+/* 1ff7140a-addc-49da-8bb2-a7026e65426d	*/
+static struct bt_uuid_128 gatt_lora_datarate_characteristic_uuid	 = BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x1ff7140a, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
+
+/* 1ff7140b-addc-49da-8bb2-a7026e65426d	*/
+static struct bt_uuid_128 gatt_lora_adr_characteristic_uuid	 = BT_UUID_INIT_128(
+	BT_UUID_128_ENCODE(0x1ff7140b, 0xaddc, 0x49da, 0x8bb2, 0xa7026e65426d));
+
 
 BT_GATT_SERVICE_DEFINE(config_svc,
 	BT_GATT_PRIMARY_SERVICE(&gc_gatt_config_service_uuid),
@@ -218,37 +307,61 @@ BT_GATT_SERVICE_DEFINE(config_svc,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 				   read_lora_app_skey, write_lora_app_skey,
-				   &var_lora_app_skey.data),
+				   &var_lora_app_skey),
 
 	BT_GATT_CHARACTERISTIC(&gatt_nwk_skey_characteristic_uuid.uuid,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 				   read_lora_nwk_skey, write_lora_nwk_skey,
-				   &var_lora_nwk_skey.data),
+				   &var_lora_nwk_skey),
 
 	BT_GATT_CHARACTERISTIC(&gatt_app_eui_characteristic_uuid.uuid,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 				   read_lora_app_eui, write_lora_app_eui,
-				   &var_lora_app_eui.data),
+				   &var_lora_app_eui),
 
 	BT_GATT_CHARACTERISTIC(&gatt_app_key_characteristic_uuid.uuid,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 				   read_lora_app_key, write_lora_app_key,
-				   &var_lora_app_key.data),
+				   &var_lora_app_key),
 
 	BT_GATT_CHARACTERISTIC(&gatt_dev_eui_characteristic_uuid.uuid,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 				   read_lora_dev_eui, write_lora_dev_eui,
-				   &var_lora_dev_eui.data),
+				   &var_lora_dev_eui),
 
 	BT_GATT_CHARACTERISTIC(&gatt_lora_auth_characteristic_uuid.uuid,
 				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 				   read_lora_auth, write_lora_auth,
 				   &var_lora_auth),
+
+	BT_GATT_CHARACTERISTIC(&gatt_lora_class_characteristic_uuid.uuid,
+				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
+				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+				   read_lora_class,	write_lora_class,
+				   &var_lora_class),
+
+	BT_GATT_CHARACTERISTIC(&gatt_lora_chan_mask_characteristic_uuid.uuid,
+				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
+				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+				   read_lora_chan_mask,	write_lora_chan_mask,
+				   &var_lora_chan_mask),
+
+	BT_GATT_CHARACTERISTIC(&gatt_lora_datarate_characteristic_uuid.uuid,
+				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
+				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+				   read_lora_datarate, write_lora_datarate,
+				   &var_lora_datarate),
+
+	BT_GATT_CHARACTERISTIC(&gatt_lora_adr_characteristic_uuid.uuid,
+				   BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
+				   BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+				   read_lora_adr, write_lora_adr,
+				   &var_lora_adr),
 
 	BT_GATT_CHARACTERISTIC(&gatt_save_configuration_characteristic_uuid.uuid,
 				   BT_GATT_CHRC_WRITE,
@@ -281,23 +394,22 @@ static void	config_ccc_cfg_changed(const struct	bt_gatt_attr *attr,
 static ssize_t read_lora_app_skey(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(var_lora_app_skey.data));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->maxsize); //var_lora_app_skey.maxsize);
 }
 
 static ssize_t write_lora_app_skey(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t	offset,
 			uint8_t	flags)
 {
-	uint8_t	*value = attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	if (offset + len > sizeof(var_lora_app_skey.data))	{
+	if (offset + len > value->maxsize)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(value + offset, buf,	len);
+	memcpy(value->data + offset,	buf,	len);
 
 	return len;
 }
@@ -306,23 +418,22 @@ static ssize_t write_lora_app_skey(struct bt_conn *conn,	const struct bt_gatt_at
 static ssize_t read_lora_nwk_skey(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(var_lora_nwk_skey.data));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->maxsize);
 }
 
 static ssize_t write_lora_nwk_skey(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t	offset,
 			uint8_t	flags)
 {
-	uint8_t	*value = attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	if (offset + len > sizeof(var_lora_nwk_skey.data))	{
+	if (offset + len >value->maxsize)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(value + offset, buf,	len);
+	memcpy(value->data + offset,	buf,	len);
 
 	return len;
 }
@@ -331,23 +442,22 @@ static ssize_t write_lora_nwk_skey(struct bt_conn *conn,	const struct bt_gatt_at
 static ssize_t read_lora_app_eui(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(var_lora_app_eui.data));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->maxsize);
 }
 
 static ssize_t write_lora_app_eui(struct	bt_conn	*conn,	const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t	offset,
 			uint8_t	flags)
 {
-	uint8_t	*value = attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	if (offset + len > sizeof(var_lora_app_eui.data))	{
+	if (offset + len > value->maxsize)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(value + offset, buf,	len);
+	memcpy(*value->data	+	offset,	buf,	len);
 
 	return len;
 }
@@ -356,23 +466,22 @@ static ssize_t write_lora_app_eui(struct	bt_conn	*conn,	const struct bt_gatt_att
 static ssize_t read_lora_app_key(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(var_lora_app_key.data));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->maxsize);
 }
 
 static ssize_t write_lora_app_key(struct	bt_conn	*conn,	const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t	offset,
 			uint8_t	flags)
 {
-	uint8_t	*value = attr->user_data;
+	struct var_bin_s	*value = attr->user_data;
 
-	if (offset + len > sizeof(var_lora_app_key.data))	{
+	if (offset + len > value->maxsize)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(value + offset, buf,	len);
+	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
 }
@@ -382,23 +491,46 @@ static ssize_t write_lora_app_key(struct	bt_conn	*conn,	const struct bt_gatt_att
 static ssize_t read_lora_dev_eui(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	struct var_bin_s *value	= attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(var_lora_dev_eui.data));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->maxsize);
 }
 
 static ssize_t write_lora_dev_eui(struct	bt_conn	*conn,	const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t	offset,
 			uint8_t	flags)
 {
-	uint8_t	*value = attr->user_data;
+	struct var_bin_s	*value = attr->user_data;
 
-	if (offset + len > sizeof(var_lora_dev_eui.data))	{
+	if (offset + len > value->maxsize)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(value + offset, buf,	len);
+	memcpy(value->data +	offset,	buf,	len);
+
+	return len;
+}
+
+/* Radio Channel mask	*/
+static ssize_t read_lora_chan_mask(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
+			   void	*buf, uint16_t len,	uint16_t offset)
+{
+	struct var_bin_s *value	= attr->user_data;
+
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->maxsize);
+}
+
+static ssize_t write_lora_chan_mask(struct	bt_conn	*conn,	const struct bt_gatt_attr *attr,
+			const void *buf, uint16_t len, uint16_t	offset,
+			uint8_t	flags)
+{
+	struct var_bin_s	*value = attr->user_data;
+
+	if (offset + len > value->maxsize)	{
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+	}
+
+	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
 }
@@ -407,26 +539,99 @@ static ssize_t write_lora_dev_eui(struct	bt_conn	*conn,	const struct bt_gatt_att
 static ssize_t read_lora_auth(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	struct var_str_s *value	= attr->user_data;
 
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-				 sizeof(var_lora_auth.data));
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->size);
 }
 
 static ssize_t write_lora_auth(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t	offset,
 			uint8_t	flags)
 {
-	uint8_t	*value = attr->user_data;
+	struct var_str_s	*value = attr->user_data;
 
-	if (offset + len > sizeof(var_lora_auth.data))	{
+	if (offset + len > value->size)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(value + offset, buf,	len);
+	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
 }
+
+/* LoRa	class */
+static ssize_t read_lora_class(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
+			   void	*buf, uint16_t len,	uint16_t offset)
+{
+	struct var_str_s *value	=	attr->user_data;
+
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value->data,	value->size);
+}
+
+static ssize_t write_lora_class(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
+			const void *buf, uint16_t len, uint16_t	offset,
+			uint8_t	flags)
+{
+	struct var_str_s	*value = attr->user_data;
+
+	if (offset + len > value->size)	{
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+	}
+
+	memcpy(value->data +	offset,	buf,	len);
+
+	return len;
+}
+
+/* LoRa	data rate */
+static ssize_t read_lora_datarate(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
+			   void	*buf, uint16_t len,	uint16_t offset)
+{
+	const char *value =	attr->user_data;
+
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(var_lora_datarate));
+}
+
+static ssize_t write_lora_datarate(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
+			const void *buf, uint16_t len, uint16_t	offset,
+			uint8_t	flags)
+{
+	uint8_t	*value = attr->user_data;
+
+	if (offset + len > sizeof(var_lora_datarate))	{
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+	}
+
+	memcpy(value +	offset,	buf,	len);
+
+	return len;
+}
+
+/* LoRa	adaptive data rate */
+static ssize_t read_lora_adr(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
+			   void	*buf, uint16_t len,	uint16_t offset)
+{
+	const char *value =	attr->user_data;
+
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(var_lora_adr));
+}
+
+static ssize_t write_lora_adr(struct bt_conn *conn,	const struct bt_gatt_attr *attr,
+			const void *buf, uint16_t len, uint16_t	offset,
+			uint8_t	flags)
+{
+	uint8_t	*value = attr->user_data;
+
+	if (offset + len > sizeof(var_lora_adr))	{
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+	}
+
+	memcpy(value +	offset,	buf,	len);
+
+	return len;
+}
+
+
 
 
 static ssize_t save_configuration_characteristic(struct	bt_conn	*conn,	const struct bt_gatt_attr *attr,

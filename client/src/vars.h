@@ -147,13 +147,18 @@ extern struct var_str_s	var_devtype;
 extern bool	var_binary;
 extern bool	var_leds;
 extern uint16_t	var_polltimeout;
+
+extern bool	var_lora_adr;
+extern uint8_t	var_lora_datarate;
+extern struct var_str_s	var_lora_class;
 extern struct var_str_s	var_lora_auth;
 extern struct var_bin_s	var_lora_app_skey;
 extern struct var_bin_s	var_lora_nwk_skey;
 extern struct var_bin_s	var_lora_app_eui;
 extern struct var_bin_s	var_lora_dev_eui;
 extern struct var_bin_s	var_lora_app_key;
-extern struct var_bin_s var_lora_dev_addr;
+extern struct var_bin_s	var_lora_dev_addr;
+extern struct var_bin_s	var_lora_chan_mask;
 
 int	list_next_command(char *command);
 
