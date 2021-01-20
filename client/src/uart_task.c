@@ -78,6 +78,11 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 		return;
 	}
 
+	// Strong drive	level for UART Tx output low
+	const struct device	*dev1;
+	dev1 = device_get_binding("GPIO_1");
+	gpio_pin_configure(dev1, 10,	GPIO_OUTPUT_ACTIVE | GPIO_DS_ALT_LOW);
+
 // define uart_send	callback in	modem state.
 	modem_state->uart_send = uart_send;
 
