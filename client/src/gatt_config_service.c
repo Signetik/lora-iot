@@ -409,6 +409,7 @@ static ssize_t write_lora_app_skey(struct bt_conn *conn,	const struct bt_gatt_at
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora app skey len:%d\n", len);
 	memcpy(value->data + offset,	buf,	len);
 
 	return len;
@@ -433,6 +434,7 @@ static ssize_t write_lora_nwk_skey(struct bt_conn *conn,	const struct bt_gatt_at
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora nwk skey len:%d\n",	len);
 	memcpy(value->data + offset,	buf,	len);
 
 	return len;
@@ -457,7 +459,8 @@ static ssize_t write_lora_app_eui(struct	bt_conn	*conn,	const struct bt_gatt_att
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	memcpy(*value->data	+	offset,	buf,	len);
+	printk("lora app eui len:%d\n",	len);
+	memcpy(value->data	+	offset,	buf,	len);
 
 	return len;
 }
@@ -481,6 +484,7 @@ static ssize_t write_lora_app_key(struct	bt_conn	*conn,	const struct bt_gatt_att
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora app key len:%d\n",	len);
 	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
@@ -506,6 +510,7 @@ static ssize_t write_lora_dev_eui(struct	bt_conn	*conn,	const struct bt_gatt_att
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora dev eui len:%d\n",	len);
 	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
@@ -530,6 +535,7 @@ static ssize_t write_lora_chan_mask(struct	bt_conn	*conn,	const struct bt_gatt_a
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora chan mask len:%d\n", len);
 	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
@@ -554,6 +560,7 @@ static ssize_t write_lora_auth(struct bt_conn *conn,	const struct bt_gatt_attr *
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora auth len:%d\n", len);
 	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
@@ -577,7 +584,7 @@ static ssize_t write_lora_class(struct bt_conn *conn,	const struct bt_gatt_attr 
 	if (offset + len > value->size)	{
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
-
+	printk("lora class len:%d\n", len);
 	memcpy(value->data +	offset,	buf,	len);
 
 	return len;
@@ -599,9 +606,11 @@ static ssize_t write_lora_datarate(struct bt_conn *conn,	const struct bt_gatt_at
 	uint8_t	*value = attr->user_data;
 
 	if (offset + len > sizeof(var_lora_datarate))	{
+	printk("ERR	lora datarate len:%d, size:%d\n", len, sizeof(var_lora_datarate));
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora datarate len:%d\n", len);
 	memcpy(value +	offset,	buf,	len);
 
 	return len;
@@ -611,7 +620,7 @@ static ssize_t write_lora_datarate(struct bt_conn *conn,	const struct bt_gatt_at
 static ssize_t read_lora_adr(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	uint8_t	*value =	attr->user_data;
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(var_lora_adr));
 }
@@ -626,6 +635,7 @@ static ssize_t write_lora_adr(struct bt_conn *conn,	const struct bt_gatt_attr *a
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
+	printk("lora adr len:%d\n",	len);
 	memcpy(value +	offset,	buf,	len);
 
 	return len;
