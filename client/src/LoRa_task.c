@@ -56,6 +56,8 @@ K_MSGQ_DEFINE(lora_tx_queue, sizeof(struct lora_tx_message), 10, 4);
 #define	MAX_RX_DATA_LEN	255
 //#define	TX_CW
 
+void custom_app_rx(uint8_t buffer, int sz);
+
 /*
  * Module Variables.
  */
@@ -152,6 +154,9 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 	size_t obuffer_len = 64;
 
 	if (sz > 0)	{
+#if !defined(CONFIG_SIGNETIK_APP_NONE)
+		custom_app_rx(buffer, sz);
+#endif
 		base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
 		
 		k_sem_take(&sem_rx_cb, K_FOREVER);

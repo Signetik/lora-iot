@@ -31,12 +31,6 @@
  */ 
 
 
-void debug_print(const char* format, ...);
-
-#ifdef STEVE
-void epochsec2020_to_calendar_time(uint32_t epochsecs_2020, struct rtc_calendar_time* time);
-#endif
-
 void set_rtc(uint32_t epochsecs_2020);
 
 uint32_t get_rtc_time();

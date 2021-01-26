@@ -1,5 +1,6 @@
 #include <zephyr.h>
 #include <string.h>
+#include <logging/log.h>
 #include "timing_profile.h"
 #include "relay_control.h"
 #include "veridart_main_task.h"
@@ -15,13 +16,15 @@ static timingprofile_t current_profile;
 static uint16_t completed_oper_iterations;
 static uint8_t current_operation_status;
 
+LOG_MODULE_REGISTER(timingprofile, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
+
 void timing_profile_set(timingprofile_t* profile)
 {	
 	k_sem_take(&profile_mutex, K_FOREVER);
         memcpy(&current_profile, profile, sizeof(timingprofile_t));
     k_sem_give(&profile_mutex);
 	
-	debug_print("Set timing profile to: pre_delay_sec:%d, on_msec:%u, number_of_sprays:%d, off_sec:%d\r\n", profile->pre_delay_sec, profile->on_msec, profile->number_of_sprays, profile->off_sec);
+	LOG_INF("Set timing profile to: pre_delay_sec:%d, on_msec:%u, number_of_sprays:%d, off_sec:%d", profile->pre_delay_sec, profile->on_msec, profile->number_of_sprays, profile->off_sec);
 }
 
 void timing_profile_get(timingprofile_t* profile)
@@ -142,7 +145,7 @@ static void timing_profile_execute()
 
 void timing_profile_task(void* p)
 {
-	debug_print("Timing profile task started\r\n");
+	LOG_INF("Timing profile task started");
 	
 	k_sem_init(&profile_mutex, 0, 1);
 	k_sem_init(&execution_start_semaphore, 0, 1);
@@ -153,7 +156,7 @@ void timing_profile_task(void* p)
 	{
 		k_sem_take(&execution_start_semaphore, K_FOREVER);
 		 
-		debug_print("Timing profile execution started!\r\n");
+		LOG_INF("Timing profile execution started!");
 		 
 		timing_profile_execute();
 		

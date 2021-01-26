@@ -131,7 +131,9 @@ static void process_packet_setclock(uint8_t* packet)
 		
 		set_device_state(device_timesetup);
 		set_device_tx_quiet(0);
+#ifdef STEVE
 		led_on();
+#endif
 	}
 }
 
@@ -325,7 +327,7 @@ static int pack_tp_data(timingprofile_t* tp_data, char *packed)
 static void queue_uplink(uint32_t queue_time_sec)
 {
 	device_status_t s_packet;
-	uint8_t packet_type;
+	uint8_t packet_type = 0;
 	
 	uint8_t state = get_device_state();
 
@@ -451,3 +453,7 @@ void veridart_queue_uplink(uplink_type_t uplink_type)
 	
 }
 
+void custom_app_rx(uint8_t *data, int sz)
+{
+	veridart_process_downlink(data, sz);
+}
