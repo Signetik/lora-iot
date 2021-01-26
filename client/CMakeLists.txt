@@ -35,3 +35,8 @@ set(sources
 target_sources(app PRIVATE ${sources})
 target_sources(app PRIVATE _sigver.c)
 
+target_sources_ifdef(CONFIG_SIGNETIK_APP_VERIDART app PRIVATE src/app_veridart/relay_control.c)
+target_sources_ifdef(CONFIG_SIGNETIK_APP_VERIDART app PRIVATE src/app_veridart/timing_profile.c)
+target_sources_ifdef(CONFIG_SIGNETIK_APP_VERIDART app PRIVATE src/app_veridart/utility.c)
+target_sources_ifdef(CONFIG_SIGNETIK_APP_VERIDART app PRIVATE src/app_veridart/veridart_main_task.c)
+target_sources_ifdef(CONFIG_SIGNETIK_APP_VERIDART app PRIVATE src/app_veridart/veridart-messages.c)

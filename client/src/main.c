@@ -17,6 +17,10 @@
 #include "vars.h"
 #include "version.h"
 
+#if !defined(CONFIG_SIGNETIK_APP_NONE)
+void custom_app_start(void);
+#endif
+
 void main(void)
 {
 	
@@ -31,6 +35,9 @@ void main(void)
 	led_thread_start();
 	bt_thread_start();
 	lora_thread_start();
+#if !defined(CONFIG_SIGNETIK_APP_NONE)
+	custom_app_start();
+#endif
 
 	while(1)
 	{

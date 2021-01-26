@@ -45,6 +45,8 @@ LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 K_SEM_DEFINE(sem_rx_cb,	0, 1);
 K_SEM_DEFINE(sem_lora_push,	0, 1);
 
+K_MSGQ_DEFINE(lora_tx_queue, sizeof(struct lora_tx_message), 10, 4);
+
 /*
  * Module Defines
  */
@@ -162,6 +164,8 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 
 #define	FORCE_GPIO_1_7_HIGH	1
 
+static struct lora_tx_message msg;
+
 /*
  * Public Functions
  */
@@ -252,10 +256,12 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		else if	(var_enabled)
 		{		/* Block until data	arrives	or 5 seconds	passes */
 			k_sleep(K_MSEC(1000));
-#if(0)
-			lorawan_send(1,	txData,	MAX_TX_DATA_LEN, 0 /*LORAWAN_MSG_CONFIRMED*/);
-			k_sleep(K_MSEC(5000));
-#endif
+			if (k_msgq_get(&lora_tx_queue, &msg, K_NO_WAIT) == 0) {
+				// TODO: Set Purple
+				LOG_INF("Send Lora Packet");
+				lorawan_send(1,	msg.message, msg.length, 0 /*LORAWAN_MSG_CONFIRMED*/);
+				k_sleep(K_MSEC(10000));
+			}
 #if(0)			
 			len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000), &rssi, &snr);
 
