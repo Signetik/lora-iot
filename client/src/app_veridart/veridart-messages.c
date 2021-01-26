@@ -46,18 +46,19 @@
 #include "utility.h"
 #include "../version.h"
 
+void rtc_match_callback(struct k_timer *timer_id);
+
 static uint32_t last_uplink_queue_time_sec = 0;
+K_TIMER_DEFINE(go_timer, rtc_match_callback, NULL);
 
 #define SEND_VERSIONNUM_TO_SERVER
 //#define SEND_RESETCAUSE_TO_SERVER
 
 LOG_MODULE_REGISTER(veridartmsg, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
-void rtc_match_callback(void)
+void rtc_match_callback(struct k_timer *timer_id)
 {
-#ifdef STEVE
-	rtc_calendar_disable_callback(&rtc_instance, RTC_CALENDAR_CALLBACK_ALARM_0);
-#endif
+	k_timer_stop(&go_timer);
 	k_sem_give(&execution_start_semaphore);
 }
 
@@ -78,34 +79,17 @@ static void set_rtc_callback_from_packet(uint8_t* packet)
 	LOG_DBG("go time is %d secs from now", time_epochsec2020 - time_epochsec2020_now);
 	int time_to_go_secs = time_epochsec2020 - time_epochsec2020_now;
  	
-#ifdef STEVE
-	struct rtc_calendar_time t;
-
-	
-
 	//If GO time is past and was in the immediate XX seconds, start the operation immediately. 
 		//This is to account for not getting GO in time due to network congestion.
 	if((time_to_go_secs < 0) && (time_to_go_secs > -FORGIVENESS_TIME_FOR_DELAYED_GO)){
 		LOG_DBG("GO time is past but within forgiveness window, execution will be started!");				
-		epochsec2020_to_calendar_time(time_epochsec2020_now+GRACE_PERIOD_FOR_TIMER_SETUP_TO_TRIGGER_ALARM, &t);
+		k_timer_start(&go_timer, K_SECONDS(1), K_NO_WAIT);
 	}
 	else {
-		epochsec2020_to_calendar_time(time_epochsec2020, &t);
+		k_timer_start(&go_timer, K_SECONDS(time_to_go_secs), K_NO_WAIT);
 	}
 	
-	LOG_DBG("Timing profile will start executing at: %4d%02d%02d %02d:%02d:%02d", t.year, t.month, t.day, t.hour, t.minute, t.second);
-
-	struct rtc_calendar_alarm_time alarm;
-	alarm.mask = RTC_CALENDAR_ALARM_MASK_YEAR;
-	alarm.time.year = t.year;
-	alarm.time.month =  t.month;
-	alarm.time.day = t.day;
-	alarm.time.hour = t.hour;
-	alarm.time.minute = t.minute;
-	alarm.time.second = t.second;
-	rtc_calendar_set_alarm(&rtc_instance, &alarm, RTC_CALENDAR_ALARM_0);
-	rtc_calendar_enable_callback(&rtc_instance, RTC_CALENDAR_CALLBACK_ALARM_0);
-#endif
+	LOG_DBG("Timing profile will start executing in %d seconds", time_to_go_secs);
 }
 
 static void set_profile_from_packet(uint8_t* pkt)

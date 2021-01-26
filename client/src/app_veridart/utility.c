@@ -33,71 +33,27 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <zephyr.h>
+#include <zephyr/types.h>
 #include "main.h"
 #include "utility.h"
 #include <time.h>
 
-#ifdef STEVE
-void epochsec2020_to_calendar_time(uint32_t epochsecs_2020, struct rtc_calendar_time* time)
-{
-	//Convert to Unix epoch seconds
-	const uint32_t unix_epoch_start_to_2020_sec = 1577836800;
-	time_t unix_epoch_sec = epochsecs_2020 + unix_epoch_start_to_2020_sec;
-	
-	//Convert to time struct
-	struct tm time_struct;
-	memcpy(&time_struct, gmtime(&unix_epoch_sec), sizeof (struct tm));
-	
-	//put in RTC calendar struct
-	time->year = time_struct.tm_year + 1900;
-	time->month = time_struct.tm_mon + 1;
-	time->day = time_struct.tm_mday;
-	time->hour = time_struct.tm_hour;
-	time->minute = time_struct.tm_min;
-	time->second = time_struct.tm_sec;
-
-}
-
+static int64_t rtc_offset = 0;
 
 //This function sets the system RTC, given seconds since 12:00:00AM January 1, 2020 UTC
 void set_rtc(uint32_t epochsecs_2020)
 {
-	struct rtc_calendar_time time;
-	
-	epochsec2020_to_calendar_time(epochsecs_2020, &time);
-	
-	//set the RTC
-	rtc_calendar_set_time(&rtc_instance, &time);
+	int64_t uptime = k_uptime_get();
+
+	rtc_offset = epochsecs_2020 - uptime;
 }
-#endif
 
 //This function returns the current RTC time, in seconds since 12:00:00AM January 1, 2020 UTC
 uint32_t get_rtc_time()
 {
-#ifdef STEVE
-	//Get RTC calendar time
-	struct rtc_calendar_time time;
-	rtc_calendar_get_time(&rtc_instance, &time);
-	
-	//Convert to time struct
-	struct tm t;
-	t.tm_year = time.year - 1900;
-	t.tm_mon = time.month - 1;
-	t.tm_mday = time.day;
-	t.tm_hour = time.hour;
-	t.tm_min = time.minute;
-	t.tm_sec = time.second;
-	
-	//Convert to unix epoch seconds
-	time_t unix_epoch_sec = mktime(&t);
-	
-	const uint32_t unix_epoch_start_to_2020_sec = 1577836800;
-	uint32_t epoch_secs_2020 = unix_epoch_sec - unix_epoch_start_to_2020_sec;
-	
-	return epoch_secs_2020;
-#else
-	return 0;
-#endif
+	int64_t uptime = k_uptime_get();
+
+	return uptime + rtc_offset;
 }
 
 

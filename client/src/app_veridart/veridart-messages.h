@@ -38,8 +38,6 @@ typedef enum {
 
 void veridart_process_downlink(uint8_t* packet, uint8_t packetLen);
 void veridart_queue_uplink(uplink_type_t uplink_type);
-void rtc_match_callback(void);
-
 
 
 typedef struct timingprofile_s {
