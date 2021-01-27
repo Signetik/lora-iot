@@ -143,7 +143,7 @@ static void timing_profile_execute()
     }
 }
 
-void timing_profile_task(void* p)
+void timing_profile_thread(void *p1, void *p2, void *p3)
 {
 	LOG_INF("Timing profile task started");
 	
@@ -174,7 +174,18 @@ void timing_profile_task(void* p)
 	}
 }
 
+///	Create Timing Profile thread/task.
+K_THREAD_STACK_DEFINE(timing_profile_stack_area, TIMING_PROFILE_STACKSIZE);
+struct k_thread	timing_profile_thread_data;
 
-
-
+///	Start Timing Profile thread.
+void timing_profile_thread_start(void)
+{
+	/* k_tid_t my_tid =	*/
+	k_thread_create(&timing_profile_thread_data, timing_profile_stack_area,
+		K_THREAD_STACK_SIZEOF(timing_profile_stack_area),
+		timing_profile_thread,
+		NULL, NULL,	NULL,
+		TIMING_PROFILE_PRIORITY, 0, K_NO_WAIT);
+}
 

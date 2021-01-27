@@ -36,6 +36,8 @@
 
 #include "veridart_main_task.h"
 #include "veridart-messages.h"
+#include "timing_profile.h"
+#include "relay_control.h"
 #include "../signetik.h"
 #include "main.h"
 #include "utility.h"
@@ -213,7 +215,7 @@ void veridart_thread(void *p1, void *p2, void *p3)
 	}	
 };
 
-///	Create LoRa	thread/task.
+///	Create Veridart thread/task.
 K_THREAD_STACK_DEFINE(veridart_stack_area, VERIDART_STACKSIZE);
 struct k_thread	veridart_thread_data;
 
@@ -230,5 +232,7 @@ void veridart_thread_start(void)
 
 void custom_app_start(void)
 {
+	relay_init();
+	timing_profile_thread_start();
 	veridart_thread_start();
 }
