@@ -28,6 +28,7 @@
 #include "wdt_task.h"
 #include "lora_task.h"
 #include "uart_task.h"
+#include "led_task.h"
 #include "vars.h"
 
 /*
@@ -134,6 +135,15 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 {
 	char status_str[16];
 
+	static led_msg_t led_msg = {
+		.red = true,
+		.green = false,
+		.blue =	true,
+		.enable	= false
+	};
+
+	k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+
 	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
 
 	if (success) {
@@ -153,6 +163,15 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 	uint8_t	obuffer[64];
 	size_t obuffer_len = 64;
 
+	static led_msg_t led_msg = {
+		.red = false,
+		.green = true,
+		.blue =	false,
+		.enable	= true
+	};
+
+	k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+
 	if (sz > 0)	{
 #if !defined(CONFIG_SIGNETIK_APP_NONE)
 		custom_app_rx(buffer, sz);
@@ -165,6 +184,9 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 		uart_send("\r\n", 0);
 		k_sem_give(&sem_rx_cb);
 	}
+
+	led_msg.enable = false;
+	k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
 }
 
 #define	FORCE_GPIO_1_7_HIGH	1
@@ -262,7 +284,15 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		{		/* Block until data	arrives	or 5 seconds	passes */
 			k_sleep(K_MSEC(1000));
 			if (k_msgq_get(&lora_tx_queue, &msg, K_NO_WAIT) == 0) {
-				// TODO: Set Purple
+				static led_msg_t led_msg = {
+					.red = true,
+					.green = false,
+					.blue =	true,
+					.enable	= true
+				};
+
+				k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+
 				LOG_INF("Send Lora Packet");
 				lorawan_send(1,	msg.message, msg.length, 0 /*LORAWAN_MSG_CONFIRMED*/);
 				k_sleep(K_MSEC(10000));
