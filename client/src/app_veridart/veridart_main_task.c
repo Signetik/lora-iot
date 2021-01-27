@@ -42,7 +42,7 @@
 
 LOG_MODULE_REGISTER(veridarttask, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
-K_SEM_DEFINE(veridart_main_mutex, 0, 1);
+K_SEM_DEFINE(veridart_main_mutex, 1, 1);
 
 uint8_t current_device_state;
 uint8_t device_tx_quiet = 0;

@@ -48,5 +48,5 @@ void relay_init()
 	ioport_set_pin_level(RELAY_PIN, IOPORT_PIN_LEVEL_LOW);
 #endif
 	
-	k_sem_init(&relay_mutex, 0, 1);
+	k_sem_init(&relay_mutex, 1, 1);
 }

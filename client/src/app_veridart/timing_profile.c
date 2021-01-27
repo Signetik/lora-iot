@@ -147,10 +147,10 @@ void timing_profile_task(void* p)
 {
 	LOG_INF("Timing profile task started");
 	
-	k_sem_init(&profile_mutex, 0, 1);
-	k_sem_init(&execution_start_semaphore, 0, 1);
-	k_sem_init(&cancel_operation_semaphore, 0, 1);
-	k_sem_init(&timer_callback_semaphore, 0, 1);
+	k_sem_init(&profile_mutex, 1, 1);
+	k_sem_init(&execution_start_semaphore, 1, 1);
+	k_sem_init(&cancel_operation_semaphore, 1, 1);
+	k_sem_init(&timer_callback_semaphore, 1, 1);
 	
 	while(1)
 	{
