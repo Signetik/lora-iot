@@ -260,7 +260,7 @@ static void	binary_handler_push(struct modem_binary_state_s	*state,	struct modem
 
 	if (ret	< 0)
 	{
-		LOG_INF("sigconfig_push	fail");
+		LOG_INF("lora_push	fail");
 		modem_binary_send_error(state, verr_inv_access);
 		return;
 	}
