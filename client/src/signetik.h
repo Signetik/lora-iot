@@ -6,7 +6,7 @@
  *										SPDX-License-Identifier: BSD-4-Clause *
  *============================================================================*/
 
-#define	LORA_STACKSIZE		1024
+#define	LORA_STACKSIZE		2048
 #define	LORA_PRIORITY		   4
 
 #define	UART_STACKSIZE		1024
