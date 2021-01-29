@@ -165,7 +165,7 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 	uint8_t	obuffer[64];
 	size_t obuffer_len = 64;
 
-	static led_msg_t led_msg = {
+	led_msg_t led_msg = {
 		.red = false,
 		.green = true,
 		.blue =	false,
@@ -288,7 +288,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		{		/* Block until data	arrives	or 5 seconds	passes */
 			k_sleep(K_MSEC(1000));
 			if (k_msgq_get(&lora_tx_queue, &msg, K_NO_WAIT)	== 0) {
-				static led_msg_t led_msg = {
+				led_msg_t led_msg = {
 					.red = true,
 					.green = false,
 					.blue =	true,
@@ -299,7 +299,23 @@ void lora_thread(void *p1, void	*p2, void *p3)
 
 				LOG_INF("Send Lora Packet");
 				uart_send("+notify,lora:tx,status:send\r\n", 0);
-				lorawan_send(1,	msg.message, msg.length, 0 /*LORAWAN_MSG_CONFIRMED*/);
+				ret = lorawan_send(1, msg.message, msg.length, 0 /*LORAWAN_MSG_CONFIRMED*/);
+				if (ret != 0) {
+					char status_str[16];
+
+					snprintf(status_str, sizeof(status_str)-1, "err:%d", ret);
+
+					uart_send("+notify,lora:tx,status:fail,", 0);
+					uart_send(status_str, 0);
+					uart_send("\r\n", 0);
+
+					led_msg.blue = false;
+					k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+					k_sleep(K_MSEC(1000));
+					led_msg.enable = false;
+					k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+				}
+				// TODO: Eliminate this but set a timeout for the TX to complete. Turn off the LED and enable the next TX
 				k_sleep(K_MSEC(10000));
 			}
 #if(0)			
