@@ -105,6 +105,8 @@ uint8_t get_device_tx_quiet()
 //Returns a random delay between 0ms and 2000ms
 static uint32_t get_random_delay()
 {
+	LOG_DBG("random delay: %d ms", 0);
+	return 0;
 	//Note: rand()returns a random number, max 65536
 	uint32_t random_number = (sys_rand32_get() % (2000 + 1));
 	LOG_DBG("random delay: %d ms", random_number);
