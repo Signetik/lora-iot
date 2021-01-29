@@ -101,6 +101,9 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	// Adaptive	data rate selection
 	lorawan_enable_adr(var_lora_adr);
 
+	// Data	rate selection	(Function ignores datarate if ADR is set.)
+	lorawan_set_datarate(var_lora_datarate);
+
 	// Channel mask	selection
 	lorawan_set_channelmask(var_lora_chan_mask.data);
 
