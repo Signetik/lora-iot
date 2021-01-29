@@ -81,7 +81,7 @@ static void timing_profile_execute()
 	
 	for (int i = 0; i < delay_iterations; i++)
 	{
-		if (k_sem_take(&cancel_operation_semaphore, K_NO_WAIT))
+		if (k_sem_take(&cancel_operation_semaphore, K_NO_WAIT) == 0)
 		{
 			operation_status_set(canceled);
 			return;
@@ -102,7 +102,7 @@ static void timing_profile_execute()
 		
 		for (int k = 0; k < delay_iterations; k++)
 		{
-			if (k_sem_take(&cancel_operation_semaphore, K_NO_WAIT))
+			if (k_sem_take(&cancel_operation_semaphore, K_NO_WAIT) == 0)
 			{
 				relay_off();
 				operation_status_set(canceled);
@@ -126,7 +126,7 @@ static void timing_profile_execute()
 		
 		for (int z = 0; z < delay_iterations; z++)
 		{
-			if (k_sem_take(&cancel_operation_semaphore, K_NO_WAIT))
+			if (k_sem_take(&cancel_operation_semaphore, K_NO_WAIT) == 0)
 			{
 				operation_status_set(canceled);
 				return;
