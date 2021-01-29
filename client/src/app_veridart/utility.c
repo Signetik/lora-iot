@@ -45,7 +45,7 @@ void set_rtc(uint32_t epochsecs_2020)
 {
 	int64_t uptime = k_uptime_get();
 
-	rtc_offset = epochsecs_2020 - uptime;
+	rtc_offset = epochsecs_2020 - (uptime / 1000);
 }
 
 //This function returns the current RTC time, in seconds since 12:00:00AM January 1, 2020 UTC
@@ -53,7 +53,7 @@ uint32_t get_rtc_time()
 {
 	int64_t uptime = k_uptime_get();
 
-	return uptime + rtc_offset;
+	return (uptime / 1000) + rtc_offset;
 }
 
 
