@@ -64,7 +64,7 @@ void set_device_state(uint8_t state)
 		}
 	k_sem_give(&veridart_main_mutex);
 	
-	LOG_DBG("device state set to %d", state);
+	LOG_INF("device state set to %d", state);
 
 	//veridart_queue_uplink(uplink_statechange);
 }
@@ -86,7 +86,7 @@ void set_device_tx_quiet(uint8_t state)
 		device_tx_quiet = state;
 	k_sem_give(&veridart_main_mutex);
 	
-	LOG_DBG("device Tx quiet set to %d", state);
+	LOG_INF("device Tx quiet set to %d", state);
 
 }
 
