@@ -594,7 +594,7 @@ static ssize_t write_lora_class(struct bt_conn *conn,	const struct bt_gatt_attr 
 static ssize_t read_lora_datarate(struct	bt_conn	*conn, const struct	bt_gatt_attr *attr,
 			   void	*buf, uint16_t len,	uint16_t offset)
 {
-	const char *value =	attr->user_data;
+	const uint8_t *value =	attr->user_data;
 
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(var_lora_datarate));
 }
@@ -605,13 +605,14 @@ static ssize_t write_lora_datarate(struct bt_conn *conn,	const struct bt_gatt_at
 {
 	uint8_t	*value = attr->user_data;
 
-	if (offset + len > sizeof(var_lora_datarate))	{
+	// byte	size comes in as 2 byte	array for some reason, so will fail	traditional	size test
+	if (offset + len > 2)	{
 	printk("ERR	lora datarate len:%d, size:%d\n", len, sizeof(var_lora_datarate));
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	printk("lora datarate len:%d\n", len);
-	memcpy(value +	offset,	buf,	len);
+	printk("lora datarate len:%d, but using	1\n", len);
+	memcpy(value +	offset,	buf,	1);
 
 	return len;
 }
