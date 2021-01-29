@@ -39,6 +39,7 @@
 #include "timing_profile.h"
 #include "relay_control.h"
 #include "../signetik.h"
+#include "../vars.h"
 #include "main.h"
 #include "utility.h"
 
@@ -176,11 +177,20 @@ void veridart_thread(void *p1, void *p2, void *p3)
 #ifdef STEVE
 	LOG_INF("ResetCause: 0x%02X", system_get_reset_cause());
 #endif
-	
+
+	var_enabled = true;
 	set_device_state(device_booted); //Device will start in state device_booted
 	
 	while(1)
-	{		
+	{
+		if (var_enabled) {
+		}
+		else {
+			set_device_state(device_booted); //Device will start in state device_booted
+	
+			k_sleep(K_MSEC(1000));
+			continue;
+		}
 		switch(current_device_state)
 		{
 			case device_booted :
