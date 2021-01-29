@@ -39,6 +39,7 @@
 #include "timing_profile.h"
 #include "relay_control.h"
 #include "../signetik.h"
+#include "../vars.h"
 #include "main.h"
 #include "utility.h"
 
@@ -64,7 +65,7 @@ void set_device_state(uint8_t state)
 		}
 	k_sem_give(&veridart_main_mutex);
 	
-	LOG_DBG("device state set to %d", state);
+	LOG_INF("device state set to %d", state);
 
 	//veridart_queue_uplink(uplink_statechange);
 }
@@ -86,7 +87,7 @@ void set_device_tx_quiet(uint8_t state)
 		device_tx_quiet = state;
 	k_sem_give(&veridart_main_mutex);
 	
-	LOG_DBG("device Tx quiet set to %d", state);
+	LOG_INF("device Tx quiet set to %d", state);
 
 }
 
@@ -104,6 +105,8 @@ uint8_t get_device_tx_quiet()
 //Returns a random delay between 0ms and 2000ms
 static uint32_t get_random_delay()
 {
+	LOG_DBG("random delay: %d ms", 0);
+	return 0;
 	//Note: rand()returns a random number, max 65536
 	uint32_t random_number = (sys_rand32_get() % (2000 + 1));
 	LOG_DBG("random delay: %d ms", random_number);
@@ -176,11 +179,20 @@ void veridart_thread(void *p1, void *p2, void *p3)
 #ifdef STEVE
 	LOG_INF("ResetCause: 0x%02X", system_get_reset_cause());
 #endif
-	
+
+	var_enabled = true;
 	set_device_state(device_booted); //Device will start in state device_booted
 	
 	while(1)
-	{		
+	{
+		if (var_enabled) {
+		}
+		else {
+			set_device_state(device_booted); //Device will start in state device_booted
+	
+			k_sleep(K_MSEC(1000));
+			continue;
+		}
 		switch(current_device_state)
 		{
 			case device_booted :

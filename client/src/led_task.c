@@ -105,7 +105,7 @@ void led_thread(void *p1, void *p2,	void *p3)
 
 	while (1)
 	{
-		LOG_DBG("LoRa Thread loop...");
+		LOG_DBG("LED Thread loop...");
 		if (var_leds)
 		{
 			gpio_pin_set(led_r,	LEDR_PIN,	led_msg.red);

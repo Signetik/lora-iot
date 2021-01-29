@@ -10,7 +10,6 @@
 struct k_sem profile_mutex;
 struct k_sem execution_start_semaphore;
 struct k_sem cancel_operation_semaphore;
-struct k_sem timer_callback_semaphore;
 
 static timingprofile_t current_profile;
 static uint16_t completed_oper_iterations;
@@ -148,10 +147,9 @@ void timing_profile_thread(void *p1, void *p2, void *p3)
 	LOG_INF("Timing profile task started");
 	
 	k_sem_init(&profile_mutex, 1, 1);
-	k_sem_init(&execution_start_semaphore, 1, 1);
-	k_sem_init(&cancel_operation_semaphore, 1, 1);
-	k_sem_init(&timer_callback_semaphore, 1, 1);
-	
+	k_sem_init(&execution_start_semaphore, 0, 1);
+	k_sem_init(&cancel_operation_semaphore, 0, 1);
+
 	while(1)
 	{
 		k_sem_take(&execution_start_semaphore, K_FOREVER);

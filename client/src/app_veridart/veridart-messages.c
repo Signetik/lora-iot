@@ -76,20 +76,20 @@ static void set_rtc_callback_from_packet(uint8_t* packet)
 	time_epochsec2020 |= packet[4];
 	
 	uint32_t time_epochsec2020_now = get_rtc_time();
-	LOG_DBG("go time is %d secs from now", time_epochsec2020 - time_epochsec2020_now);
+	LOG_INF("go time is at epoch2020:%d, %d secs from now: %d", time_epochsec2020, time_epochsec2020 - time_epochsec2020_now, time_epochsec2020_now);
 	int time_to_go_secs = time_epochsec2020 - time_epochsec2020_now;
  	
 	//If GO time is past and was in the immediate XX seconds, start the operation immediately. 
 		//This is to account for not getting GO in time due to network congestion.
 	if((time_to_go_secs < 0) && (time_to_go_secs > -FORGIVENESS_TIME_FOR_DELAYED_GO)){
-		LOG_DBG("GO time is past but within forgiveness window, execution will be started!");				
+		LOG_WRN("GO time is past but within forgiveness window, execution will be started!");				
 		k_timer_start(&go_timer, K_SECONDS(1), K_NO_WAIT);
 	}
 	else {
 		k_timer_start(&go_timer, K_SECONDS(time_to_go_secs), K_NO_WAIT);
 	}
 	
-	LOG_DBG("Timing profile will start executing in %d seconds", time_to_go_secs);
+	LOG_INF("Timing profile will start executing in %d seconds", time_to_go_secs);
 }
 
 static void set_profile_from_packet(uint8_t* pkt)
@@ -127,6 +127,8 @@ static void process_packet_setclock(uint8_t* packet)
 		time_epochsec2020 |= packet[2] << 16;
 		time_epochsec2020 |= packet[3] << 8;
 		time_epochsec2020 |= packet[4];
+
+		LOG_INF("Setting epoch2020 time to %d", time_epochsec2020);
 		set_rtc(time_epochsec2020);
 		
 		set_device_state(device_timesetup);
@@ -171,7 +173,7 @@ static void process_packet_stop()
 	
 	if ((current_state == device_start_delay) || (current_state == device_active_start) || (current_state == device_active_end))
 	{
-		LOG_DBG("Stopping current operation");
+		LOG_INF("Stopping current operation");
 		k_sem_give(&cancel_operation_semaphore);
 	}
 }
@@ -225,7 +227,7 @@ const char *prefix)
 			}
 		}
 	}
-	LOG_DBG("%s ",buffer);
+	LOG_DBG("%s ", log_strdup(buffer));
 }
 
 void veridart_process_downlink(uint8_t* packet, uint8_t packetLen)
@@ -240,41 +242,41 @@ void veridart_process_downlink(uint8_t* packet, uint8_t packetLen)
 	switch(data[0])
 	{
 		case pkt_server_bootupACK:
-			LOG_DBG("got packet server_bootupACK");
+			LOG_INF("got packet server_bootupACK");
 			set_device_tx_quiet(0);
 			break;
 		case pkt_server_setclock :
-			LOG_DBG("got packet server_setclock");
+			LOG_INF("got packet server_setclock");
 			process_packet_setclock(packet);
 			set_device_tx_quiet(0);
 			break;
 		case pkt_server_timesetupACK:
-			LOG_DBG("got packet server_timesetupACK");
+			LOG_INF("got packet server_timesetupACK");
 			if(current_state == device_timesetup) { set_device_tx_quiet(1); }
 			break;
 		case pkt_server_settimingprofile :
-			LOG_DBG("got packet server_settimingprofile");
+			LOG_INF("got packet server_settimingprofile");
 			process_packet_settimingprofile(packet);
 			set_device_tx_quiet(0);
 			break;
 		case pkt_server_timingprofileACK:
-			LOG_DBG("got packet server_timingprofileACK");
+			LOG_INF("got packet server_timingprofileACK");
 			if(current_state == device_obtained_timing_profile) { set_device_tx_quiet(1); }
 			break;
 		case pkt_server_go :
-			LOG_DBG("got packet server_go");
+			LOG_INF("got packet server_go");
 			process_packet_go(packet);
 			break;
 		case pkt_server_goACK:
-			LOG_DBG("got packet server_goACK");
+			LOG_INF("got packet server_goACK");
 			if(current_state == device_obtained_go) { set_device_tx_quiet(1); }
 			break;
 		case pkt_server_completedACK:
-			LOG_DBG("got packet server_completedACK");
+			LOG_INF("got packet server_completedACK");
 			if(current_state == device_operation_complete) { set_device_tx_quiet(1); }
 			break;
 		case pkt_server_stop :
-			LOG_DBG("got packet server_stop");
+			LOG_INF("got packet server_stop");
 			process_packet_stop();
 			set_device_tx_quiet(1);
 			break;
@@ -405,7 +407,7 @@ static void queue_uplink(uint32_t queue_time_sec)
 		s_packet.crc16_tp_data |= (VERSION_INCREMENTAL & 0xF);
 		s_packet.crc16_tp_data <<= 4;
 		s_packet.crc16_tp_data |= (VERSION_ENGG & 0xF);
-		LOG_DBG("Sending version number to server x%04x", s_packet.crc16_tp_data);
+		LOG_INF("Sending version number to server x%04x", s_packet.crc16_tp_data);
 	}	
 #endif
 #ifdef SEND_RESETCAUSE_TO_SERVER
@@ -447,7 +449,7 @@ void veridart_queue_uplink(uplink_type_t uplink_type)
 		}
 		else
 		{
-			LOG_DBG("status uplink dropped");
+			LOG_WRN("status uplink dropped");
 		}
 	}
 	
