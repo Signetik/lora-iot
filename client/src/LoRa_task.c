@@ -104,6 +104,8 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	// Channel mask	selection
 	lorawan_set_channelmask(var_lora_chan_mask.data);
 
+	lorawan_set_datarate(var_lora_datarate);
+
 	if (strcmp(strupr(var_lora_auth.data),	"ABP")	== 0)
 	{
 	//	Authentication by personalization
