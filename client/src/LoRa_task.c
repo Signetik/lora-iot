@@ -57,7 +57,7 @@ K_MSGQ_DEFINE(lora_tx_queue, sizeof(struct lora_tx_message), 4,	4);	/* 4 message
 #define	MAX_RX_DATA_LEN	255
 //#define	TX_CW
 
-void custom_app_rx(uint8_t buffer, int sz);
+void custom_app_rx(uint8_t *buffer, int sz);
 
 /*
  * Module Variables.
