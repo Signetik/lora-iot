@@ -15,7 +15,7 @@
 #include "uart_task.h"
 #include "wdt_task.h"
 #include "vars.h"
-#include "version.h"
+#include "sigversion.h"
 
 #if	!defined(CONFIG_SIGNETIK_APP_NONE)
 void custom_app_start(void);

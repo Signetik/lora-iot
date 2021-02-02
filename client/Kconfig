@@ -20,8 +20,6 @@ choice  SIGNETIK_APP
 	default SIGNETIK_APP_NONE
 config SIGNETIK_APP_NONE
 	bool "No custom application"
-config SIGNETIK_APP_VERIDART
-	bool "Veridart custom application"
 endchoice
 
 module = SIGNETIK_CLIENT
