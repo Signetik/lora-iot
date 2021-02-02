@@ -26,9 +26,6 @@ set(sources
 	src/led_task.c
 	src/bt_task.c
 	src/gatt_config_service.c
-	src/modem_binary_interface_api.c
-	src/modem_binary_interface_api_device.c
-	src/modem_ascii_interface_api.c
 )
 
 # Main app
