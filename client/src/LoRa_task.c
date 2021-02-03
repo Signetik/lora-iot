@@ -136,6 +136,8 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	return ret;
 }
 
+void display_base64_data(uint8_t *buffer, int sz);
+
 void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 {
 	char status_str[16];
@@ -161,13 +163,11 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 		uart_send(status_str, 0);
 		uart_send("\r\n", 0);
 	}
+	k_sem_give(&sem_rx_cb);
 }
 
 void lorawan_rx_data(uint8_t *buffer, int sz)
 {
-	uint8_t	obuffer[64];
-	size_t obuffer_len = 64;
-
 	led_msg_t led_msg = {
 		.red = false,
 		.green = true,
@@ -181,17 +181,24 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 #if	!defined(CONFIG_SIGNETIK_APP_NONE)
 		custom_app_rx(buffer, sz);
 #endif
-		base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
-		
 		k_sem_take(&sem_rx_cb, K_FOREVER);
 		uart_send("+notify,lora:rx,base64:", 0);
-		uart_send(obuffer, obuffer_len);
+		display_base64_data(buffer, sz);
 		uart_send("\r\n", 0);
 		k_sem_give(&sem_rx_cb);
 	}
 
 	led_msg.enable = false;
 	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
+}
+
+void display_base64_data(uint8_t *buffer, int sz)
+{
+	uint8_t	obuffer[64];
+	size_t obuffer_len = 64;
+
+	base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
+	uart_send(obuffer, obuffer_len);
 }
 
 #define	FORCE_GPIO_1_7_HIGH	1
@@ -301,7 +308,9 @@ void lora_thread(void *p1, void	*p2, void *p3)
 				k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
 
 				LOG_INF("Send Lora Packet");
-				uart_send("+notify,lora:tx,status:send\r\n", 0);
+				uart_send("+notify,lora:tx,status:send,base64:", 0);
+				display_base64_data(msg.message, msg.length);
+				uart_send("\r\n", 0);
 				ret = lorawan_send(1, msg.message, msg.length, 0 /*LORAWAN_MSG_CONFIRMED*/);
 				if (ret != 0) {
 					char status_str[16];
