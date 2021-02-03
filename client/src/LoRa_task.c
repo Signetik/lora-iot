@@ -45,6 +45,7 @@ LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
 K_SEM_DEFINE(sem_rx_cb,	0, 1);
 K_SEM_DEFINE(sem_lora_push,	0, 1);
+K_SEM_DEFINE(sem_tx_busy, 0, 1);
 
 K_MSGQ_DEFINE(lora_tx_queue, sizeof(struct lora_tx_message), 4,	4);	/* 4 messages, 4 byte alignment	*/
 
@@ -150,6 +151,7 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 	};
 
 	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
+	k_sem_give(&sem_tx_busy);
 
 	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
 
@@ -305,6 +307,7 @@ void lora_thread(void *p1, void	*p2, void *p3)
 					.enable	= true
 				};
 
+				k_sem_take(&sem_tx_busy, K_SECONDS(10));
 				k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
 
 				LOG_INF("Send Lora Packet");
@@ -327,8 +330,6 @@ void lora_thread(void *p1, void	*p2, void *p3)
 					led_msg.enable = false;
 					k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
 				}
-				// TODO: Eliminate this but set a timeout for the TX to complete. Turn off the LED and enable the next TX
-				k_sleep(K_MSEC(10000));
 			}
 #if(0)			
 			len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000), &rssi, &snr);
