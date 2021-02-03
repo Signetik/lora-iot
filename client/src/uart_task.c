@@ -18,12 +18,13 @@
 //#include <net/socket.h>
 #include <zephyr.h>
 
-#include "sigconfig.h"
+//#include "sigconfig.h"
 #include "signetik.h"
 #include "uart_task.h"
 #include "vars.h"
 #include "wdt_task.h"
 
+#if defined(CONFIG_SIGNETIK_MODEM_API)
 #include "modem_interface_api.h"
 
 #if	defined(CONFIG_SENSOR_POLLING_METHOD_UART_BINARY)
@@ -31,6 +32,7 @@
 #endif
 #if	defined(CONFIG_SENSOR_POLLING_METHOD_UART_PUSH)
 #include "modem_ascii_interface_api.h"
+#endif
 #endif
 
 #define	DEFAULT_UART_NODE DT_ALIAS(uart1)
@@ -46,6 +48,7 @@ static void	process_bytes(struct modem_state_s *modem_state, char *data, int len
 static struct tty_serial tty;
 static uint8_t uart_buffer[2048]; // The TTY code has a	bug. If	you	fill this up it	crashes!
 
+#if defined(CONFIG_SIGNETIK_MODEM_API)
 union ms_s
 {
 #if	defined(CONFIG_SENSOR_POLLING_METHOD_UART_BINARY)
@@ -63,13 +66,16 @@ static bool	modem_state_initialized	= false;
 #endif
 
 static struct modem_api_func *api =	NULL;
+#endif
 
 void uart_thread(void *p1, void	*p2,	void *p3)
 {
-	struct device *uart;
+	const struct device *uart;
 	char buffer[8];
 	int	count;
+#if defined(CONFIG_SIGNETIK_MODEM_API)
 	static struct modem_api_func *new_api;
+#endif
 
 	uart = device_get_binding("UART_1");
 	if (!uart)
@@ -78,8 +84,10 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 		return;
 	}
 
+#if defined(CONFIG_SIGNETIK_MODEM_API)
 // define uart_send	callback in	modem state.
 	modem_state->uart_send = uart_send;
+#endif
 
 	tty_init(&tty, uart);
 	tty_set_rx_timeout(&tty, 100);
@@ -91,11 +99,18 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 	// Register	with WDT.
 	uint8_t	thread_id =	wdt_register_thread();
 
+#if !defined(CONFIG_SIGNETIK_MODEM_API)
+	uart_send("+notify,event:init,result:0,firmware:", 0);
+	uart_send(var_firmware.data, 0);
+	uart_send("\r\n", 0);
+#endif
+
 	while (1)
 	{
 		// Feed	WDT	(must use assigned thread ID).
 		wdt_feed_watchdog(thread_id);
 
+#if defined(CONFIG_SIGNETIK_MODEM_API)
 		if (var_binary)
 		{
 			new_api	= modem_binary_api_get_func();
@@ -118,6 +133,9 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 		{
 			process_bytes(modem_state, buffer, count);
 		}
+#else
+        k_sleep(K_SECONDS(1));
+#endif
 	}
 }
 
@@ -137,6 +155,7 @@ int	uart_send(uint8_t *buffer, int length)
 	return result;
 }
 
+#if defined(CONFIG_SIGNETIK_MODEM_API)
 static void	process_bytes(struct modem_state_s *modem_state, char *data, int length)
 {
 	for	(int index = 0;	index <	length;	index++)
@@ -144,6 +163,7 @@ static void	process_bytes(struct modem_state_s *modem_state, char *data, int len
 		api->process_byte(modem_state, data[index]);
 	}
 }
+#endif
 
 ///	Create UART	thread/task.
 
