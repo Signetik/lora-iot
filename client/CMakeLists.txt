@@ -26,3 +26,5 @@ set(sources
 # Main app
 target_sources(app PRIVATE ${sources})
 target_sources(app PRIVATE _sigver.c)
+
+target_sources_ifdef(CONFIG_SIGNETIK_APP_LORATEST app PRIVATE src/loratest_task.c)
