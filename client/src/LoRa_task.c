@@ -155,6 +155,7 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 
 	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
 
+	k_sem_take(&sem_rx_cb, K_FOREVER);
 	if (success) {
 		uart_send("+notify,lora:tx,status:success,", 0);
 		uart_send(status_str, 0);
