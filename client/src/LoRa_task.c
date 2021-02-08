@@ -77,11 +77,6 @@ struct lora_modem_config config	=
 char txData[MAX_TX_DATA_LEN] = {0x64, 0x01,	0x00, 0x00,	0x00, 0x0E,	0xE1, 0x39,	0x00, 0x00,	0x00, 0x00};
 uint8_t	rxData[MAX_RX_DATA_LEN]	= {0};
 
-uint8_t	app_eui[] =		{0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x03, 0x31, 0xC9};
-uint8_t	nwk_skey[] =	{0x0B, 0x30, 0x52, 0x51, 0xA6, 0x0C, 0x52, 0x11, 0x72, 0x32, 0x85, 0xD1, 0xFB, 0x2E, 0xF8, 0x39};
-uint8_t	app_skey[] =	{0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7};
-uint8_t	dev_eui[] =		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01};
-
 /*
  * Local Functions
  */
@@ -93,19 +88,11 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	{
 	//	Authentication by personalization
 		join_cfg->mode = LORAWAN_ACT_ABP;
-#if(1)
-		join_cfg->dev_eui =	dev_eui;			// var_lora_dev_eui.data;
-		join_cfg->abp.dev_addr = var_lora_dev_addr;			// device address
-		join_cfg->abp.app_skey = app_skey;		// var_lora_app_skey.data;
-		join_cfg->abp.nwk_skey = nwk_skey;		// var_lora_nwk_skey.data;
-		join_cfg->abp.app_eui =	app_eui;			// var_lora_app_eui.data;
-#else
 		join_cfg->dev_eui =	var_lora_dev_eui.data;			// var_lora_dev_eui.data;
-		join_cfg->abp.dev_addr = var_lora_dev_addr;			// device address
+		join_cfg->abp.dev_addr = *((uint32_t*)var_lora_dev_addr.data);			// device address
 		join_cfg->abp.app_skey = var_lora_app_skey.data;		// var_lora_app_skey.data;
 		join_cfg->abp.nwk_skey = var_lora_nwk_skey.data;		// var_lora_nwk_skey.data;
 		join_cfg->abp.app_eui =	var_lora_dev_eui.data;			// var_lora_app_eui.data;
-#endif
 	}
 	else if	(strcmp(var_lora_auth.data,	"otaa")	== 0)
 	{
