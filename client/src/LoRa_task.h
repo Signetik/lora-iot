@@ -14,7 +14,14 @@
 void lora_thread_start(void);
 int	lora_push(char *key, char *value);
 
+extern struct k_msgq lora_tx_queue;
 
-//extern const cell_packet_def_t *sig_default_packet_def;
+#define	LORA_QUEUE_OBJECT_SIZE 53
 
-#endif /* __LTE_TASK_H */
+struct lora_tx_message {
+	uint32_t length;
+	uint8_t	message[LORA_QUEUE_OBJECT_SIZE];
+};
+
+
+#endif /* __LORA_TASK_H	*/

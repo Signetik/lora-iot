@@ -70,10 +70,10 @@ LOG_MODULE_REGISTER(ledtask, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
  * Module Variables.
  */
 
-static struct device *led_en = NULL;
-static struct device *led_r	= NULL;
-static struct device *led_g	= NULL;
-static struct device *led_b	= NULL;
+static const struct device *led_en = NULL;
+static const struct device *led_r	= NULL;
+static const struct device *led_g	= NULL;
+static const struct device *led_b	= NULL;
 
 K_MSGQ_DEFINE(led_msgq,	sizeof(led_msg_t), 5, 4);
 
@@ -105,7 +105,7 @@ void led_thread(void *p1, void *p2,	void *p3)
 
 	while (1)
 	{
-		LOG_DBG("LoRa Thread loop...");
+		LOG_DBG("LED Thread loop...");
 		if (var_leds)
 		{
 			gpio_pin_set(led_r,	LEDR_PIN,	led_msg.red);
@@ -116,17 +116,14 @@ void led_thread(void *p1, void *p2,	void *p3)
 		else
 		{
 			// allow var_leds to override ON setting in	message
-			gpio_pin_set(led_r,	LEDR_PIN,	0);
-			gpio_pin_set(led_g,	LEDG_PIN,	0);
-			gpio_pin_set(led_b,	LEDB_PIN,	0);
-			gpio_pin_set(led_en, LEDEN_PIN,	0);
+			// when var_leds is changed, the led_msg should be sent to wake up
+			// this thread
+			gpio_pin_set(led_r,	LEDR_PIN,	var_leds & 0x4);
+			gpio_pin_set(led_g,	LEDG_PIN,	var_leds & 0x2);
+			gpio_pin_set(led_b,	LEDB_PIN,	var_leds & 0x1);
+			gpio_pin_set(led_en, LEDEN_PIN,	var_leds & 0x8);
 		}
-		k_sleep(K_MSEC(1000));
-
-		led_msg.blue = led_msg.red;
-		led_msg.red	= !led_msg.red;
-
-	//	k_msgq_get(&led_msgq, &led_msg,	K_FOREVER);
+		k_msgq_get(&led_msgq, &led_msg,	K_FOREVER);
 	}
 }
 

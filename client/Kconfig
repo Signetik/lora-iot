@@ -15,6 +15,15 @@ config SENSOR_POLLING_METHOD_UART_PUSH
 	bool "Sensor UART push sensor"
 endchoice
 
+choice  SIGNETIK_APP
+	bool "Custom application"
+	default SIGNETIK_APP_NONE
+config SIGNETIK_APP_NONE
+	bool "No custom application"
+config SIGNETIK_APP_LORATEST
+	bool "LoRa test application"
+endchoice
+
 module = SIGNETIK_CLIENT
 module-dep = LOG
 module-str = Signetik Client

@@ -25,9 +25,10 @@
 #include <logging/log.h>
 
 #include "signetik.h"
-//#include "wdt_task.h"
+#include "wdt_task.h"
 #include "lora_task.h"
 #include "uart_task.h"
+#include "led_task.h"
 #include "vars.h"
 
 /*
@@ -44,24 +45,24 @@ LOG_MODULE_REGISTER(loratask,	CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
 
 K_SEM_DEFINE(sem_rx_cb,	0, 1);
 K_SEM_DEFINE(sem_lora_push,	0, 1);
+K_SEM_DEFINE(sem_tx_busy, 0, 1);
+
+K_MSGQ_DEFINE(lora_tx_queue, sizeof(struct lora_tx_message), 4,	4);	/* 4 messages, 4 byte alignment	*/
 
 /*
  * Module Defines
  */
 #define	LORA_TX_BUF_SIZE 255
 
-#define	APP_COAP_SEND_INTERVAL_MS K_MSEC(5000)
-#define	APP_COAP_MAX_MSG_LEN (2048 + 16)
-#define	APP_COAP_VERSION 1
-
 #define	MAX_TX_DATA_LEN	12
 #define	MAX_RX_DATA_LEN	255
 //#define	TX_CW
 
+void custom_app_rx(uint8_t *buffer, int sz);
+
 /*
  * Module Variables.
  */
-uint8_t	thread_id;
 
 struct lora_modem_config config	= 
 {
@@ -84,7 +85,32 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 {
 	int	ret	= 0;
 
-	if (strcmp(var_lora_auth.data, "abp") == 0)
+	// determine Class operation
+	if (strcmp(strupr(var_lora_class.data),	"A") ==	0)
+	{
+		lorawan_set_class(LORAWAN_CLASS_A);
+	}
+	else if	(strcmp(strupr(var_lora_class.data), "C") == 0)
+	{
+		lorawan_set_class(LORAWAN_CLASS_C);
+	}
+	else
+	{
+		ret	= -1;
+	}
+
+	// Adaptive	data rate selection
+	lorawan_enable_adr(var_lora_adr);
+
+	// Data	rate selection	(Function ignores datarate if ADR is set.)
+	lorawan_set_datarate(var_lora_datarate);
+
+	// Channel mask	selection
+	lorawan_set_channelmask(var_lora_chan_mask.data);
+
+	lorawan_set_datarate(var_lora_datarate);
+
+	if (strcmp(strupr(var_lora_auth.data),	"ABP")	== 0)
 	{
 	//	Authentication by personalization
 		join_cfg->mode = LORAWAN_ACT_ABP;
@@ -94,7 +120,7 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 		join_cfg->abp.nwk_skey = var_lora_nwk_skey.data;		// var_lora_nwk_skey.data;
 		join_cfg->abp.app_eui =	var_lora_dev_eui.data;			// var_lora_app_eui.data;
 	}
-	else if	(strcmp(var_lora_auth.data,	"otaa")	== 0)
+	else if	(strcmp(strupr(var_lora_auth.data),	"OTAA")	== 0)
 	{
 	//	Over The Air Authentication
 		join_cfg->mode = LORAWAN_ACT_OTAA;
@@ -111,29 +137,83 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	return ret;
 }
 
+void display_base64_data(uint8_t *buffer, int sz);
+
+void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
+{
+	char status_str[16];
+
+	static led_msg_t led_msg = {
+		.red = true,
+		.green = false,
+		.blue =	true,
+		.enable	= false
+	};
+
+	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
+	k_sem_give(&sem_tx_busy);
+
+	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
+
+	k_sem_take(&sem_rx_cb, K_FOREVER);
+	if (success) {
+		uart_send("+notify,lora:tx,status:success,", 0);
+		uart_send(status_str, 0);
+		uart_send("\r\n", 0);
+	}
+	else {
+		uart_send("+notify,lora:tx,status:fail,", 0);
+		uart_send(status_str, 0);
+		uart_send("\r\n", 0);
+	}
+	k_sem_give(&sem_rx_cb);
+}
+
 void lorawan_rx_data(uint8_t *buffer, int sz)
+{
+	led_msg_t led_msg = {
+		.red = false,
+		.green = true,
+		.blue =	false,
+		.enable	= true
+	};
+
+	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
+
+	if (sz > 0)	{
+#if	!defined(CONFIG_SIGNETIK_APP_NONE)
+		custom_app_rx(buffer, sz);
+#endif
+		k_sem_take(&sem_rx_cb, K_FOREVER);
+		uart_send("+notify,lora:rx,base64:", 0);
+		display_base64_data(buffer, sz);
+		uart_send("\r\n", 0);
+		k_sem_give(&sem_rx_cb);
+	}
+
+	led_msg.enable = false;
+	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
+}
+
+void display_base64_data(uint8_t *buffer, int sz)
 {
 	uint8_t	obuffer[64];
 	size_t obuffer_len = 64;
 
-	if (sz > 0)	{
-		base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
-		
-		k_sem_take(&sem_rx_cb, K_FOREVER);
-		uart_send("+notify,lora:rx,base64:", 0);
-		uart_send(obuffer, obuffer_len);
-		uart_send("\r\n", 0);
-		k_sem_give(&sem_rx_cb);
-	}
+	base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
+	uart_send(obuffer, obuffer_len);
 }
 
 #define	FORCE_GPIO_1_7_HIGH	1
+
+static struct lora_tx_message msg;
 
 /*
  * Public Functions
  */
 void lora_thread(void *p1, void	*p2, void *p3)
 {
+	uint8_t	thread_id;
 	int16_t	rssi;
 	int8_t snr;
 	int	len;
@@ -154,11 +234,15 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		return;
 	}
 
+	// Register	with WDT.
+	thread_id =	wdt_register_thread();
+
 	k_sem_give(&sem_rx_cb);
 	k_sem_give(&sem_lora_push);
 
 	// Register	with WDT.
 //	thread_id =	wdt_register_thread();
+
 #if	defined(FORCE_GPIO_1_7_HIGH)
 	dev1 = device_get_binding("GPIO_1");
 	gpio_pin_configure(dev1, 7,	GPIO_OUTPUT_ACTIVE);
@@ -171,30 +255,23 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		LOG_DBG("LoRa Thread loop...");
 
 		// Feed	WDT	(must use assigned thread ID).
-//		wdt_feed_watchdog(thread_id);
+		wdt_feed_watchdog(thread_id);
 
 		if (!var_connected && var_enabled) 
 		{
-			static uint16_t	channels[5];
-			channels[0]	= channels[1] =	channels[2]	= channels[3] =	0;
-			channels[0]	= 0x0f00;
-			channels[4]	= 0xff;
-
 			if (0 == lorawan_start())
 			{
 				uart_send("+notify,lora:join,status:start\r\n",	0);
 			}
-			lorawan_set_class(LORAWAN_CLASS_C);
-			lorawan_enable_adr(false);
-			lorawan_set_datarate(LORAWAN_DR_1);
 
-			lorawan_set_channelmask(channels);
-
+			lorawan_set_txcb(lorawan_tx_data);
 			lorawan_set_rxcb(lorawan_rx_data);
-
-			if (0 != lora_configure(&lw_config))
+			
+			ret	= lora_configure(&lw_config);
+			if (0 != ret)
 			{
 				LOG_ERR("Invalid LoRa configuration.");
+				printk("(ret %d)\n", ret);
 				uart_send("+notify,lora:join,status:rejected\r\n", 0);
 			}
 			else
@@ -222,10 +299,39 @@ void lora_thread(void *p1, void	*p2, void *p3)
 		}
 		else if	(var_enabled)
 		{		/* Block until data	arrives	or 5 seconds	passes */
-#if(0)
-			lorawan_send(1,	txData,	MAX_TX_DATA_LEN, 0 /*LORAWAN_MSG_CONFIRMED*/);
-			k_sleep(K_MSEC(5000));
-#endif
+			k_sleep(K_MSEC(1000));
+			if (k_msgq_get(&lora_tx_queue, &msg, K_NO_WAIT)	== 0) {
+				led_msg_t led_msg = {
+					.red = true,
+					.green = false,
+					.blue =	true,
+					.enable	= true
+				};
+
+				k_sem_take(&sem_tx_busy, K_SECONDS(10));
+				k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
+
+				LOG_INF("Send Lora Packet");
+				uart_send("+notify,lora:tx,status:send,base64:", 0);
+				display_base64_data(msg.message, msg.length);
+				uart_send("\r\n", 0);
+				ret = lorawan_send(1, msg.message, msg.length, 0 /*LORAWAN_MSG_CONFIRMED*/);
+				if (ret != 0) {
+					char status_str[16];
+
+					snprintf(status_str, sizeof(status_str)-1, "err:%d", ret);
+
+					uart_send("+notify,lora:tx,status:fail,", 0);
+					uart_send(status_str, 0);
+					uart_send("\r\n", 0);
+
+					led_msg.blue = false;
+					k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+					k_sleep(K_MSEC(1000));
+					led_msg.enable = false;
+					k_msgq_put(&led_msgq, &led_msg, K_MSEC(100));
+				}
+			}
 #if(0)			
 			len	= lora_recv(lora_dev, rxData,	MAX_RX_DATA_LEN, K_MSEC(5000), &rssi, &snr);
 
@@ -325,11 +431,10 @@ void lora_thread(void *p1, void	*p2, void *p3)
 int	lora_push(char *key, char *value)
 {
 	int	ret	= -1;
-	uint8_t	buffer[LORA_TX_BUF_SIZE];
-	//uint32_t data_len;
-	size_t blen	= sizeof(buffer);
-	
+	struct lora_tx_message msg;
+	size_t msglen =	sizeof(msg.message);
 	const struct device	*lora_dev;
+
 	lora_dev = device_get_binding(DEFAULT_RADIO);
 	if (!lora_dev) 
 	{
@@ -338,15 +443,18 @@ int	lora_push(char *key, char *value)
 	}
 	else
 	{
-		//data_len = snprintf(buffer,	sizeof(buffer),	"%s,%s", key, value);
-		ret	= base64_decode(buffer,	blen, &blen, &value[1],	strlen(value)-2);
-		if ((ret ==	0) && (blen	<= LORA_TX_BUF_SIZE) &&	(blen >	0))
+		ret	= base64_decode(msg.message, msglen, &msglen, &value[1], strlen(value)-2);
+		if ((ret ==	0) && (msglen <= sizeof(msg.message)) && (msglen >	0))
 		{	
 			k_sem_take(&sem_lora_push, K_FOREVER);
-			//ret	= lora_send(lora_dev, buffer, blen);
-			ret	= lorawan_send(1, buffer, blen,	0 /*LORAWAN_MSG_CONFIRMED*/);	
-			k_sem_give(&sem_lora_push);
+			msg.length = msglen;
 
+			ret	= k_msgq_put(&lora_tx_queue, &msg, K_NO_WAIT);
+			if (0 != ret)
+			{
+				LOG_ERR("Lora Tx queue full\n");
+			}
+			k_sem_give(&sem_lora_push);
 		}
 	}
 	return ret;

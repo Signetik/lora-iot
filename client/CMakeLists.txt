@@ -16,22 +16,15 @@ set(sources
 	src/main.c
 	src/uart_task.c
 	src/vars.c
-#	src/wdt_task.c
-	src/sigconfig.c
-#	src/cbor.c
-#	src/coap.c
-#	src/cantcoap.c
-#	src/sysdep.c
+	src/wdt_task.c
 	src/LoRa_task.c
 	src/led_task.c
 	src/bt_task.c
 	src/gatt_config_service.c
-	src/modem_binary_interface_api.c
-	src/modem_binary_interface_api_device.c
-	src/modem_ascii_interface_api.c
 )
 
 # Main app
 target_sources(app PRIVATE ${sources})
 target_sources(app PRIVATE _sigver.c)
 
+target_sources_ifdef(CONFIG_SIGNETIK_APP_LORATEST app PRIVATE src/loratest_task.c)

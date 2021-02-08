@@ -57,11 +57,11 @@ static void* flash_clear(void);
 		_name_,	sizeof(_default_), sizeof(_name_) \
 	};
 
-#define VAR_BIN_PROTECT(...) __VA_ARGS__ 
+#define	VAR_BIN_PROTECT(...) __VA_ARGS__ 
 #define	VAR_BIN_CREATE(_name_,_minsize_,_maxsize_,_default_)	\
 	uint8_t	_name_[_maxsize_]	= _default_; \
 	struct var_bin_s var_##_name_ =	{ \
-		_name_,	_maxsize_, _minsize_, _maxsize_ \
+		_name_,	_maxsize_, _minsize_, _maxsize_	\
 	};
 
 bool var_echo =	true;
@@ -84,19 +84,6 @@ uint16_t var_port =	5715;
 VAR_STR_CREATE(apikey,	65,	"");
 VAR_STR_CREATE(uri,	 65, "*");
 
-
-//VAR_STR_CREATE(subtopic,VAR_TOPIC_SIZE, "devices/sig-test-device-1/messages/devicebound/#");
-VAR_STR_CREATE(subtopic1, VAR_TOPIC_SIZE, "devices/sig-test-device-2/messages/devicebound/#");
-VAR_STR_CREATE(subtopic2, VAR_TOPIC_SIZE, "$iothub/methods/POST/#");
-VAR_STR_CREATE(subtopic3, VAR_TOPIC_SIZE, "$iothub/twin/res/#");
-VAR_STR_CREATE(subtopic4, VAR_TOPIC_SIZE, "");
-VAR_STR_CREATE(subtopic5, VAR_TOPIC_SIZE, "");
-
-//VAR_STR_CREATE(pubtopic,VAR_TOPIC_SIZE, "devices/sig-test-device-1/messages/events/");
-VAR_STR_CREATE(pubtopic,  VAR_TOPIC_SIZE, "devices/sig-test-device-2/messages/events/");
-
-uint8_t	 var_qos		= 1;
-//uint16_t var_keepalive	= CONFIG_MQTT_KEEPALIVE;
 uint32_t var_device_id	= 0;
 uint8_t	 var_battery	= 0;
 uint32_t var_queue_mark	= 0;
@@ -108,111 +95,23 @@ bool var_connect	= true;
 bool var_auto_connect	= true;
 bool var_enabled	= false;
 bool var_sensor_poll	= false;
-bool var_nbiot		= false;
 bool var_binary		= false;
 bool var_leds		= true;
 
-// Report Names
-uint8_t	report[VAR_MAX_REPORTS][VAR_REPORT_NAME_SIZE] =	{
-	"queue1",
-	"queue2",
-	"queue3",
-	"queue4",
-	"queue5",
-};
-
-// Reports
-struct var_str_s var_report[VAR_MAX_REPORTS] = {
-	{ report[0], 7,	VAR_REPORT_NAME_SIZE },
-	{ report[1], 7,	VAR_REPORT_NAME_SIZE },
-	{ report[2], 7,	VAR_REPORT_NAME_SIZE },
-	{ report[3], 7,	VAR_REPORT_NAME_SIZE },
-	{ report[4], 7,	VAR_REPORT_NAME_SIZE },
-};
-
 // LoRa	Vars
-VAR_STR_CREATE(lora_auth, 5, "abp");
+bool var_lora_adr =	false;
+uint8_t	var_lora_datarate	= 1;
+VAR_STR_CREATE(lora_class, 2, "C");
+VAR_STR_CREATE(lora_auth, 5, "ABP");
 VAR_BIN_CREATE(lora_app_skey, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
 VAR_BIN_CREATE(lora_nwk_skey, 16, 16, VAR_BIN_PROTECT({0x0B, 0x30, 0x52, 0x51, 0xA6, 0x0C, 0x52, 0x11, 0x72, 0x32, 0x85, 0xD1, 0xFB, 0x2E, 0xF8, 0x39}));
-VAR_BIN_CREATE(lora_app_eui, 8, 8, VAR_BIN_PROTECT({0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x03, 0x31, 0xC9}));
-VAR_BIN_CREATE(lora_dev_eui, 8, 8, VAR_BIN_PROTECT({0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x01}));
-VAR_BIN_CREATE(lora_app_key, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
-VAR_BIN_CREATE(lora_dev_addr, 4, 4, VAR_BIN_PROTECT({0x01, 0x20, 0x02, 0x26}));
-
-// GPS Vars
-uint16_t var_gpsinterval =	0;
-bool  var_gpsenabled  =	false;
-bool  var_gps		  =	false;
-bool  var_gpspos	  =	false;
-bool  var_gpsdate	  =	false;
-bool  var_gpstime	  =	false;
-bool  var_gpsdatetime =	false;
-bool  var_gpsnema	  =	false;
-bool  var_gpsgga	  =	false;
-bool  var_gpsgll	  =	false;
-bool  var_gpsrmc	  =	false;
-bool  var_gpsvtg	  =	false;
-bool  var_gpszda	  =	false;
-
-// GPS raw NMEA
-// static char	 nmea_strings[10][NRF_GNSS_NMEA_MAX_LEN];
-// static u32_t	 nmea_string_cnt;
-
-// GPS Names
-uint8_t	gps_report[VAR_MAX_GPS_REPORTS][VAR_GPS_NAME_SIZE]	= {
-	"gps1",
-	"gps2",
-	"gps3",
-	"gps4",
-	"gps5",
-};
-
-// GPS Reports
-struct var_str_s var_gpsreport[VAR_MAX_GPS_REPORTS]	= {
-	{ gps_report[0], 5,	VAR_GPS_NAME_SIZE },
-	{ gps_report[1], 5,	VAR_GPS_NAME_SIZE },
-	{ gps_report[2], 5,	VAR_GPS_NAME_SIZE },
-	{ gps_report[3], 5,	VAR_GPS_NAME_SIZE },
-	{ gps_report[4], 5,	VAR_GPS_NAME_SIZE },
-};
-
-// NMEA	Names
-uint8_t	gps_nmea[VAR_MAX_NMEA_REPORTS][VAR_NMEA_NAME_SIZE]	= {
-	"gga", // Global Positioning System	Fix	Data
-	"gll", // Geographic Position, Latitude	/ Longitude	and	time
-	"rmc", // Recommended minimum specific GPS/Transit data
-	"vtg", // Track	Made Good and Ground Speed (Velocity)
-	"zda", // Date & Time
-};
-
-// NMEA
-struct var_str_s var_gpsnmea[VAR_MAX_NMEA_REPORTS] = {
-	{ gps_nmea[0], 4, VAR_NMEA_NAME_SIZE },
-	{ gps_nmea[1], 4, VAR_NMEA_NAME_SIZE },
-	{ gps_nmea[2], 4, VAR_NMEA_NAME_SIZE },
-	{ gps_nmea[3], 4, VAR_NMEA_NAME_SIZE },
-	{ gps_nmea[4], 4, VAR_NMEA_NAME_SIZE },
-};
+VAR_BIN_CREATE(lora_app_eui, 8,	8, VAR_BIN_PROTECT({0x70, 0xB3,	0xD5, 0x7E,	0xD0, 0x03,	0x31, 0xC9}));
+VAR_BIN_CREATE(lora_dev_eui, 8,	8, VAR_BIN_PROTECT({0x00, 0x00,	0x00, 0x00,	0x00, 0x00,	0x0a, 0x01}));
+VAR_BIN_CREATE(lora_app_key, 16, 16, VAR_BIN_PROTECT({0x6F,	0x7B, 0x80,	0xF7, 0xE4,	0xD0, 0xB9,	0xE5, 0x1F,	0xE9, 0xF8,	0x97, 0x64,	0x15, 0xBD,	0xD7}));
+VAR_BIN_CREATE(lora_dev_addr, 4, 4,	VAR_BIN_PROTECT({0x01, 0x20, 0x02, 0x26}));
+VAR_BIN_CREATE(lora_chan_mask, 10, 10, VAR_BIN_PROTECT({0x00,0x0f, 0x00,0x00, 0x00,0x00, 0x00,0x00,	0xff,0x00}));
 
 uint16_t var_connretry	 = 30;
-uint16_t var_sectag		 = 0;
-uint16_t var_sectagquery = 21;
-
-VAR_STR_CREATE(fotahost,	 32, "fota.signetik.com");
-VAR_STR_CREATE(fotahostname, 32, "fota.signetik.com");
-VAR_STR_CREATE(fotafile,	 64, "sigcell/v1.0.4.bin");
-uint16_t var_fotastate	  =	0;
-uint16_t var_fotasubstate =	0;
-uint16_t var_fotasectag	  =	0;
-
-uint16_t var_dlcount	   = 0;
-uint16_t var_dlchunks	   = 0;
-uint32_t var_dloffset	   = 0;
-uint16_t var_dlretries	   = 0;	//CONFIG_FOTA_SOCKET_RETRIES;
-uint16_t var_dlretrycount =	0; //CONFIG_FOTA_SOCKET_RETRIES;
-
-bool var_dfuready =	false;
-bool var_fwupdate =	false;
 
 uint16_t var_polltimeout = 5;
 
@@ -238,24 +137,20 @@ typedef	void* (*setter)(void*);
 enum var_save_id {
 	id_none			=  0,
 	id_devid		=  1,
-	id_nbiot		=  2,
 	id_devtype		=  3,
-	id_fotahost		=  4,
-	id_fotahostname	=  5,
 	id_proto		=  6,
 	id_autoconnect	=  7,
-	id_queue1		= 11,
-	id_queue2		= 12,
-	id_queue3		= 13,
-	id_queue4		= 14,
-	id_queue5		= 15,
-	id_lora_auth,
-	id_appskey,
-	id_nwkskey,
-	id_appeui,
-	id_deveui,
-	id_appkey,
-	id_devaddr
+	id_lora_auth	= 16,
+	id_appskey		= 17,
+	id_nwkskey		= 18,
+	id_appeui		= 19,
+	id_deveui		= 20,
+	id_appkey		= 21,
+	id_devaddr		= 22,
+	id_lora_class	= 23,
+	id_lora_adr		= 24,
+	id_datarate		= 25,
+	id_chan_mask	= 26
 };
 
 struct key_setget_s	{
@@ -271,81 +166,31 @@ struct key_setget_s	{
 static struct key_setget_s setget[]	= {
 	{"uart_echo", vtype_boolean, vdir_readwrite, &var_echo,	NULL, NULL,	id_none},
 	{"devid", vtype_str, vdir_readwrite, &var_devid, NULL, NULL, id_devid},
-	{"user", vtype_str,	vdir_readwrite,	&var_user, NULL, NULL, id_none},
-	{"pw", vtype_str, vdir_readwrite, &var_pw, NULL, NULL, id_none},
-	{"server_address", vtype_str, vdir_readwrite, &var_host, NULL, NULL, id_none},
-	{"api_key",	vtype_str, vdir_readwrite, &var_apikey,	NULL, NULL,	id_none},
-	{"uri",	vtype_str, vdir_readwrite, &var_uri, NULL, NULL, id_none},
-	{"server_port",	vtype_uint16, vdir_readwrite, &var_port, NULL, NULL, id_none},
-	{"subtopic", vtype_str,	vdir_readwrite,	&var_subtopic1,	NULL, NULL,	id_none},
-	{"subtopic1", vtype_str, vdir_readwrite, &var_subtopic1, NULL, NULL, id_none},
-	{"subtopic2", vtype_str, vdir_readwrite, &var_subtopic2, NULL, NULL, id_none},
-	{"subtopic3", vtype_str, vdir_readwrite, &var_subtopic3, NULL, NULL, id_none},
-	{"subtopic4", vtype_str, vdir_readwrite, &var_subtopic4, NULL, NULL, id_none},
-	{"subtopic5", vtype_str, vdir_readwrite, &var_subtopic5, NULL, NULL, id_none},
-	{"pubtopic", vtype_str,	vdir_readwrite,	&var_pubtopic, NULL, NULL, id_none},
-	{"qos",	vtype_uint8, vdir_readwrite, &var_qos, NULL, NULL, id_none},
-//	{"keepalive", vtype_uint16,	vdir_readwrite,	&var_keepalive,	NULL, NULL,	id_none},
 	{"devid_gen", vtype_uint32,	vdir_read, &var_device_id, NULL, NULL, id_none},
-	//{"connection_retry_interval",	vtype_uint16, vdir_readwrite, &var_retry_interval, NULL, NULL},
 	{"firmware", vtype_str,	vdir_read, &var_firmware, NULL,	NULL, id_none},
 	{"mfirmware", vtype_str, vdir_read,	&var_mfirmware,	NULL, NULL,	id_none},
 	{"battery",	vtype_uint8, vdir_read,	&var_battery, NULL,	NULL, id_none},
 	{"connected", vtype_boolean, vdir_read,	&var_connected,	NULL, NULL,	id_none},
 	{"connect",	vtype_boolean, vdir_readwrite, &var_connect, NULL, NULL, id_none},
 	{"auto_connect", vtype_boolean,	vdir_readwrite,	&var_auto_connect, NULL, NULL, id_autoconnect},
-	//{"queue_mark", vtype_uint32, vdir_read, &var_queue_mark, NULL, NULL},
-	//{"push_mark",	vtype_uint32, vdir_read, &var_push_mark, NULL, NULL},
-//	{"cell_rsrp", vtype_uint32,	vdir_read, NULL, NULL, (getter)LTE_get_signal_strength,	id_none},
-//	{"cell_mode", vtype_str, vdir_read,	NULL, NULL,	(getter)LTE_get_mode, id_none},
 	{"proto", vtype_str, vdir_readwrite, &var_proto, NULL, NULL, id_proto},
 	{"enabled",	vtype_boolean, vdir_readwrite, &var_enabled, NULL, NULL, id_none},
-//les	{"sensor_poll",	vtype_boolean, vdir_readwrite, &var_sensor_poll, (setter)sensor_enable,	NULL, id_none},
 	{"sensor", vtype_str, vdir_readwrite, &var_sensor, NULL, id_none},
 	{"sensor_board", vtype_str,	vdir_readwrite,	&var_sensor_board, NULL, id_none},
-//	{"imei", vtype_str,	vdir_read, &var_imei, NULL,	NULL, id_none},
-//	{"imsi", vtype_str,	vdir_read, NULL, NULL, (getter)imsi_read, id_none},
-//	{"iccid", vtype_str, vdir_read,	NULL, NULL,	(getter)iccid_read,	id_none},
-//	{"nbiot", vtype_boolean, vdir_readwrite, &var_nbiot, NULL, NULL, id_nbiot},
-//	{"time", vtype_str,	vdir_read, NULL, NULL, (getter)LTE_get_time, id_none},
 	{"leds", vtype_boolean,	vdir_readwrite,	&var_leds, NULL, NULL, id_none},
-//	{"queue1", vtype_str, vdir_readwrite, &var_report[0], (setter)sigconfig_set_report_names, NULL,	id_queue1},
-//	{"queue2", vtype_str, vdir_readwrite, &var_report[1], (setter)sigconfig_set_report_names, NULL,	id_queue2},
-//	{"queue3", vtype_str, vdir_readwrite, &var_report[2], (setter)sigconfig_set_report_names, NULL,	id_queue3},
-//	{"queue4", vtype_str, vdir_readwrite, &var_report[3], (setter)sigconfig_set_report_names, NULL,	id_queue4},
-//	{"queue5", vtype_str, vdir_readwrite, &var_report[4], (setter)sigconfig_set_report_names, NULL,	id_queue5},
 	{"connretry", vtype_uint16,	vdir_readwrite,	&var_connretry,	NULL, NULL,	id_none},
-//	{"cacert", vtype_str, vdir_readwrite, NULL,	(setter)cacert_write, (getter)cacert_read, id_none},
-//	{"privcert", vtype_str,	vdir_readwrite,	NULL, (setter)privcert_write, (getter)privcert_read, id_none},
-//	{"privkey",	vtype_str, vdir_readwrite, NULL, (setter)privkey_write,	(getter)privkey_read, id_none},
-	{"sectag", vtype_uint16, vdir_readwrite, &var_sectag, NULL,	NULL, id_none},
-	{"sectagq",	vtype_uint16, vdir_readwrite, &var_sectagquery,	NULL, NULL,	id_none},
-//	{"fotahost", vtype_str,	vdir_readwrite,	&var_fotahost, NULL, NULL, id_fotahost},
-//	{"fotahostname", vtype_str,	vdir_readwrite,	&var_fotahostname, NULL, NULL, id_fotahostname},
-//	{"fotafile", vtype_str,	vdir_readwrite,	&var_fotafile, NULL, NULL, id_none},
-//	{"fotasubfile",	vtype_str, vdir_readwrite, &var_fotafile, NULL,	NULL, id_none},
-//	{"fotastart", vtype_boolean, vdir_write, NULL, (setter)fota_start, NULL, id_none},
-//	{"fotasubstart", vtype_boolean,	vdir_write,	NULL, (setter)fotasub_start, NULL, id_none},
-//	{"fotastate", vtype_uint16,	vdir_read, &var_fotastate, NULL, NULL, id_none},
-//	{"fotasubstate", vtype_uint16, vdir_read, &var_fotasubstate, NULL, NULL, id_none},
-//	{"fotasectag", vtype_uint16, vdir_readwrite, &var_fotasectag, NULL,	NULL, id_none},
-//	{"fotasuback", vtype_boolean, vdir_write, NULL,	(setter)fotasuback_set,	NULL, id_none},
-	{"dlcount",	vtype_uint16, vdir_read, &var_dlcount, NULL, NULL, id_none},
-	{"dlchunks", vtype_uint16, vdir_readwrite, &var_dlchunks, NULL,	NULL, id_none},
-	{"dloffset", vtype_uint32, vdir_readwrite, &var_dloffset, NULL,	NULL, id_none},
-	{"dlretries", vtype_uint16,	vdir_read, &var_dlretries, NULL, NULL, id_none},
-	{"dlretrycount", vtype_uint16, vdir_read, &var_dlretrycount, NULL, NULL, id_none},
-	{"fwupdate", vtype_boolean,	vdir_readwrite,	&var_fwupdate, NULL, NULL, id_none},
 	{"devtype",	vtype_str, vdir_readwrite, &var_devtype, NULL, NULL, id_devtype},
-	{"polltimeout",	vtype_uint16, vdir_readwrite, &var_polltimeout,	NULL, NULL,	id_none},
-//	{"at", vtype_str, vdir_write, NULL,	(setter)at_set,	NULL, id_none},
 	{"reboot", vtype_boolean, vdir_write, NULL,	(setter)reboot,	NULL, id_none},
 	{"save", vtype_boolean,	vdir_readwrite,	NULL, (setter)flash_save, (getter)flash_load, id_none},
-	{"flashclear", vtype_boolean, vdir_readwrite, NULL, (setter)flash_clear, NULL, id_none},
+	{"flashclear", vtype_boolean, vdir_readwrite, NULL,	(setter)flash_clear, NULL, id_none},
 
 	// LoRa
-	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,	NULL,	NULL, id_lora_auth},
+	{"auth",	vtype_str,	vdir_readwrite,	&var_lora_auth,			NULL, NULL,	id_lora_auth},
+	{"class",	vtype_str,	vdir_readwrite,	&var_lora_class,		NULL, NULL,	id_lora_class},
 	{"deveui",	vtype_binary, vdir_readwrite, &var_lora_dev_eui,	NULL, NULL,	id_deveui},
+	{"adrenabled", vtype_boolean, vdir_readwrite,  &var_lora_adr,	NULL, NULL,	id_lora_adr},
+	{"chanmask", vtype_binary, vdir_readwrite, &var_lora_chan_mask,	NULL, NULL,	id_chan_mask},
+	{"datarate", vtype_uint8, vdir_readwrite, &var_lora_datarate,	NULL, NULL,	id_datarate},
 	// LoRa	ABP
 	{"appskey",	vtype_binary, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
 	{"nwkskey",	vtype_binary,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
@@ -353,23 +198,6 @@ static struct key_setget_s setget[]	= {
 	{"appkey",	vtype_binary, vdir_readwrite, &var_lora_app_key,	NULL, NULL,	id_appkey},
 	{"appeui",	vtype_binary, vdir_readwrite, &var_lora_app_eui,	NULL, NULL,	id_appeui},
 	{"devaddr",	vtype_binary, vdir_readwrite, &var_lora_dev_addr,	NULL, NULL,	id_devaddr},
-
-	// GPS API (TODO: C.Lawson -- Finish!)
-//	{"gpsenable",	vtype_boolean, vdir_write,	   &var_gpsenabled,	 (setter)gps_enable, NULL, id_none},
-	{"gpsenabled",	vtype_boolean, vdir_read,	   &var_gpsenabled,	 NULL, NULL, id_none},
-	{"gpsinterval",	vtype_uint16,  vdir_readwrite, &var_gpsinterval, NULL, NULL, id_none},
-	{"gpsreport",	vtype_str,	   vdir_readwrite, &var_gpsreport,	 NULL, NULL, id_none}, // Support string of	report fields (pos,	date, time,	etc.)
-//	{"gps",			vtype_boolean, vdir_read,	   &var_gps,		 NULL, (getter)gps_read, id_none},
-	{"gpspos",		vtype_boolean, vdir_read,	   &var_gpspos,		 NULL, NULL, id_none},
-	{"gpsdate",		vtype_boolean, vdir_read,	   &var_gpsdate,	 NULL, NULL, id_none},
-	{"gpstime",		vtype_boolean, vdir_read,	   &var_gpstime,	 NULL, NULL, id_none},
-	{"gpsdatetime",	vtype_boolean, vdir_read,	   &var_gpsdatetime, NULL, NULL, id_none},
-	{"nmea",		vtype_boolean, vdir_read,	   &var_gpsnmea,	 NULL, NULL, id_none}, // Support string of	GGA, RMC, VTG, etc.
-	{"gga",			vtype_boolean, vdir_read,	   &var_gpsgga,		 NULL, NULL, id_none},
-	{"gll",			vtype_boolean, vdir_read,	   &var_gpsgll,		 NULL, NULL, id_none},
-	{"rmc",			vtype_boolean, vdir_read,	   &var_gpsrmc,		 NULL, NULL, id_none},
-	{"vtg",			vtype_boolean, vdir_read,	   &var_gpsvtg,		 NULL, NULL, id_none},
-	{"zda",			vtype_boolean, vdir_read,	   &var_gpszda,		 NULL, NULL, id_none},
 
 	// Help	Menu (TODO:	Implement!)
 	{"help", vtype_boolean,	vdir_read, NULL, (setter) NULL,	(getter) NULL, id_none},
@@ -592,13 +420,13 @@ int	list_next_command(char *command)
 
 static int hexdigit_to_value(uint8_t digit)
 {
-	if (digit >= '0' && digit <= '9') {
+	if (digit >= '0' &&	digit <= '9') {
 		return digit - '0';
 	}
-	if (digit >= 'a' && digit <= 'f') {
+	if (digit >= 'a' &&	digit <= 'f') {
 		return digit - 'a' + 10;
 	}
-	if (digit >= 'A' && digit <= 'F') {
+	if (digit >= 'A' &&	digit <= 'F') {
 		return digit - 'A' + 10;
 	}
 	return -1;
@@ -611,7 +439,7 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 	struct var_str_s *vstr;
 	struct var_bin_s *vbin;
 	void *variable = NULL;
-	int digval;
+	int	digval;
 
 	if (hindex < 0)	{
 		return verr_inv_key;
@@ -657,21 +485,21 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 				break;
 			case vtype_binary:
 				vbin = (struct var_bin_s*)setget[hindex].variable;
-				/* value should be of the form 0xAABBCCDD... so the length should be 2 + 2 * bytes */
+				/* value should	be of the form 0xAABBCCDD... so	the	length should be 2 + 2 * bytes */
 				vlen = strlen(value) - 2;
 				if (vlen < vbin->minsize*2)
 					return verr_inv_value;
 				if (vlen > vbin->maxsize*2)
 					return verr_inv_value;
-				if (value[0] != '0' || value[1] != 'x')
+				if (value[0] !=	'0'	|| value[1]	!= 'x')
 					return verr_inv_value;
-				vlen = vlen / 2;
-				for (int index = 0 ; index < vlen ; index++) {
-					/* Convert to hex value */
+				vlen = vlen	/ 2;
+				for	(int index = 0 ; index < vlen ;	index++) {
+					/* Convert to hex value	*/
 					digval = hexdigit_to_value(value[2 + index*2 + 0]);
 					if (digval < 0)
 						return verr_inv_value;
-					buffer[index] = digval * 16;
+					buffer[index] =	digval * 16;
 					digval = hexdigit_to_value(value[2 + index*2 + 1]);
 					if (digval < 0)
 						return verr_inv_value;
@@ -690,7 +518,7 @@ enum verr_codes	vars_set(char *key,	char *value, int vlen, char	**value_str)
 	if (setget[hindex].set)	{
 		char * result =	setget[hindex].set(value);
 		if (*value_str == NULL)	{
-			if (result == NULL) {
+			if (result == NULL)	{
 				*value_str = value;
 			}
 			else {
@@ -709,7 +537,7 @@ enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 	struct var_str_s *vstr;
 	struct var_bin_s *vbin;
 	void *variable = NULL;
-	int index;
+	int	index;
 
 	if (hindex < 0)	{
 		return verr_inv_key;
@@ -778,10 +606,10 @@ enum verr_codes	vars_get(char *key,	char *value, int vlen, char	**value_str)
 		case vtype_binary:
 			if (variable) {
 				vbin = (struct var_bin_s*)variable;
-				buffer[0] = '0';
-				buffer[1] = 'x';
-				for (index = 0 ;index < vbin->length ; index++) {
-					sprintf(&buffer[index*2+2], "%02x", vbin->data[index]);
+				buffer[0] =	'0';
+				buffer[1] =	'x';
+				for	(index = 0 ;index <	vbin->length ; index++)	{
+					sprintf(&buffer[index*2+2],	"%02x",	vbin->data[index]);
 				}
 				*value_str = buffer;
 			}
@@ -811,23 +639,3 @@ int	save_vars_config(void)
 
 	return ret;
 }
-
-
-/****************************************
- *			 Sensor	API	Commands		   *
- ****************************************/
-
-///	Enable / Disable sensor	polling.
-#if	0
-void* sensor_enable(void)
-{
-	LOG_DBG("Var: Sensor polling Enabled = %d\r\n",	var_sensor_poll);
-
-	char *result = sensor_enable_polling(var_sensor_poll);
-
-	return result;
-}
-#endif
-/****************************************
- *			 GPS API Commands			*
- ****************************************/
