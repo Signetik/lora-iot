@@ -1,35 +1,23 @@
-//============================================================================//
-//                                                                            //
-//        .d8888b.  d8b                            888    d8b 888             //
-//       d88P  Y88b Y8P                            888    Y8P 888             //
-//       Y88b.                                     888        888             //
-//        "Y888b.   888  .d88b.  88888b.   .d88b.  888888 888 888  888        //
-//           "Y88b. 888 d88P"88b 888 "88b d8P  Y8b 888    888 888 .88P        //
-//             "888 888 888  888 888  888 88888888 888    888 888888K         //
-//       Y88b  d88P 888 Y88b 888 888  888 Y8b.     Y88b.  888 888 "88b        //
-//        "Y8888P"  888  "Y88888 888  888  "Y8888   "Y888 888 888  888        //
-//                           888                                              //
-//                      Y8b d88P                                              //
-//                       "Y88P"                                Signetik, LLC  //
-//                                                           www.signetik.com //
-//----------------------------------------------------------------------------//
-//           Copyright © 2020 Signetik, LLC -- All Rights Reserved            //
-//   Signetik Confidential Proprietary Information -- Disclosure Prohibited    //
-//----------------------------------------------------------------------------//
-// Project   : SafeTraces veriDART                                            //
-// Filename  :                                                                //
-// Author(s) :                                                                //
-// Created   :                                                                //
-// Purpose   :                                                                //
-//============================================================================//
-// NOTE: Signetik will transfer ownership to SafeTraces on final delivery.
-
-/*
- * veridart_main_task.c
- *
- * Created: 8/19/2020 10:03:25 AM
- *  Author: Remy Patterson
- */
+/*============================================================================*
+ *         Copyright © 2019-2021 Signetik, LLC -- All Rights Reserved         *
+ *----------------------------------------------------------------------------*
+ *                                                              Signetik, LLC *
+ *                                                           www.signetik.com *
+ *                                          SPDX-License-Identifier: Sigentik *
+ *                                                                            *
+ * Customer may modify, compile, assemble and convert this source code into   *
+ * binary object or executable code for use on Signetk products purchased     *
+ * from Signetik or its distributors.                                         *
+ *                                                                            *
+ * Customer may incorporate or embed an binary executable version of the      *
+ * software into the Customer’s product(s), which incorporate a Signetik      *
+ * product purchased from Signetik or its distributors. Customer may          *
+ * manufacture, brand and distribute such Customer’s product(s) worldwide to  *
+ * its End-Users.                                                             *
+ *                                                                            *
+ * This agreement must be formalized with Signetik before Customer enters     *
+ * production and/or distributes products to Customer's End-Users             *
+ *============================================================================*/
 
 #include <zephyr.h>
 #include <logging/log.h>
