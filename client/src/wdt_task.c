@@ -71,7 +71,7 @@ void wdt_thread(void *p1, void *p2,	void *p3)
 	wdt	= device_get_binding(DEFAULT_WDT);
 	if (!wdt)
 	{
-		LOG_ERR("Cannot	get	WDT	device!");
+		LOG_ERR("Cannot	get	WDT	device %s!", DEFAULT_WDT);
 		return;
 	}
 

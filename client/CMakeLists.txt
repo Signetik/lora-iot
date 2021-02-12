@@ -16,7 +16,7 @@ set(sources
 	src/main.c
 	src/uart_task.c
 	src/vars.c
-#	src/wdt_task.c
+	src/wdt_task.c
 	src/sigconfig.c
 #	src/cbor.c
 #	src/coap.c

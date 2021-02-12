@@ -67,13 +67,15 @@ static struct modem_api_func *api =	NULL;
 void uart_thread(void *p1, void	*p2,	void *p3)
 {
 	struct device *uart;
-	
-//	sigconfig_init();
+	char buffer[8];
+	int	count;
+	static struct modem_api_func *new_api;
+
 	uart = device_get_binding("UART_1");
 	if (!uart)
 	{
-	printk("Cannot find	uart(%s)!\n", DEFAULT_UART);
-	return;
+		printk("Cannot find	uart(%s)!\n", DEFAULT_UART);
+		return;
 	}
 
 // define uart_send	callback in	modem state.
@@ -87,43 +89,35 @@ void uart_thread(void *p1, void	*p2,	void *p3)
 
 
 	// Register	with WDT.
-//	uint8_t	thread_id =	wdt_register_thread();
+	uint8_t	thread_id =	wdt_register_thread();
 
 	while (1)
 	{
-	// Feed	WDT	(must use assigned thread ID).
-//	wdt_feed_watchdog(thread_id);
+		// Feed	WDT	(must use assigned thread ID).
+		wdt_feed_watchdog(thread_id);
 
-	char buffer[8];
-	int	count;
-	static struct modem_api_func *new_api;
+		if (var_binary)
+		{
+			new_api	= modem_binary_api_get_func();
+		}
+		else
+		{
+			new_api	= modem_ascii_api_get_func();
+		}
+		if (new_api	!= api)
+		{
+			api	= new_api;
+			api->init(modem_state);
+			uart_send("+notify,event:init,result:0,firmware:", 0);
+			uart_send(var_firmware.data, 0);
+			uart_send("\r\n", 0);
+		}
 
-	if (var_binary)
-	{
-		new_api	= modem_binary_api_get_func();
-	}
-	else
-	{
-		new_api	= modem_ascii_api_get_func();
-	}
-	if (new_api	!= api)
-	{
-		api	= new_api;
-		api->init(modem_state);
-		uart_send("+notify,event:init,result:0,firmware:", 0);
-		uart_send(var_firmware.data, 0);
-		uart_send("\r\n", 0);
-#if	defined(MODEM_FIFO)
-		modem_state_initialized	= true;
-#endif
-	}
-
-	count =	tty_read(&tty, buffer, sizeof(buffer));	// TODO: Down the road move	this read to a uart_recv callback
-	if (count >	0)
-	{
-		process_bytes(modem_state, buffer, count);
-	}
-	//k_sleep(K_MSEC(1000));
+		count =	tty_read(&tty, buffer, sizeof(buffer));	// TODO: Down the road move	this read to a uart_recv callback
+		if (count >	0)
+		{
+			process_bytes(modem_state, buffer, count);
+		}
 	}
 }
 
