@@ -115,6 +115,8 @@ bool var_leds		= true;
 // LoRa	Vars
 bool var_lora_adr =	false;
 uint8_t	var_lora_datarate	= 1;
+uint16_t var_lora_rxdelay1	= 1000;
+uint16_t var_lora_rxdelay2	= 2000;
 VAR_STR_CREATE(lora_class, 2, "C");
 VAR_STR_CREATE(lora_auth, 5, "ABP");
 VAR_BIN_CREATE(lora_app_skey, 16, 16, VAR_BIN_PROTECT({0x6F, 0x7B, 0x80, 0xF7, 0xE4, 0xD0, 0xB9, 0xE5, 0x1F, 0xE9, 0xF8, 0x97, 0x64, 0x15, 0xBD, 0xD7}));
@@ -164,7 +166,9 @@ enum var_save_id {
 	id_lora_class	= 23,
 	id_lora_adr		= 24,
 	id_datarate		= 25,
-	id_chan_mask	= 26
+	id_chan_mask	= 26,
+	id_rxdelay1		= 27,
+	id_rxdelay2		= 28
 };
 
 struct key_setget_s	{
@@ -205,6 +209,8 @@ static struct key_setget_s setget[]	= {
 	{"adrenabled", vtype_boolean, vdir_readwrite,  &var_lora_adr,	NULL, NULL,	id_lora_adr},
 	{"chanmask", vtype_binary, vdir_readwrite, &var_lora_chan_mask,	NULL, NULL,	id_chan_mask},
 	{"datarate", vtype_uint8, vdir_readwrite, &var_lora_datarate,	NULL, NULL,	id_datarate},
+	{"rxdelay1", vtype_uint16, vdir_readwrite, &var_lora_rxdelay1,	NULL, NULL,	id_rxdelay1},
+	{"rxdelay2", vtype_uint16, vdir_readwrite, &var_lora_rxdelay2,	NULL, NULL,	id_rxdelay2},
 	// LoRa	ABP
 	{"appskey",	vtype_binary, vdir_readwrite, &var_lora_app_skey,	NULL, NULL,	id_appskey},
 	{"nwkskey",	vtype_binary,	vdir_readwrite,	&var_lora_nwk_skey,	NULL, NULL,	id_nwkskey},
