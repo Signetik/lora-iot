@@ -119,7 +119,7 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	lorawan_set_datarate(var_lora_datarate);
 
 	// Channel mask	selection
-	lorawan_set_channelmask(var_lora_chan_mask.data);
+	lorawan_set_channelmask((uint16_t*)&var_lora_chan_mask.data[0]);
 
 	// RX delay setting
 	lorawan_set_rxdelay(var_lora_rxdelay1, var_lora_rxdelay2);
