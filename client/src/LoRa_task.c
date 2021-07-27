@@ -174,14 +174,15 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 	k_sem_take(&sem_rx_cb, K_FOREVER);
 	if (success) {
 		uart_send("+notify,lora:tx,status:success,", 0);
-		uart_send(status_str, 0);
-		uart_send("\r\n", 0);
+		LOG_INF("+notify,lora:tx,status:success,");
 	}
 	else {
 		uart_send("+notify,lora:tx,status:fail,", 0);
-		uart_send(status_str, 0);
-		uart_send("\r\n", 0);
+		LOG_INF("+notify,lora:tx,status:fail,");
 	}
+	uart_send(status_str, 0);
+	uart_send("\r\n", 0);
+	LOG_INF("%s", log_strdup(status_str));
 	k_sem_give(&sem_rx_cb);
 }
 
@@ -202,8 +203,10 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 #endif
 		k_sem_take(&sem_rx_cb, K_FOREVER);
 		uart_send("+notify,lora:rx,base64:", 0);
+		LOG_INF("+notify,lora:rx,base64:");
 		display_base64_data(buffer, sz);
 		uart_send("\r\n", 0);
+		LOG_INF("\r\n");
 		k_sem_give(&sem_rx_cb);
 	}
 
@@ -218,6 +221,8 @@ void display_base64_data(uint8_t *buffer, int sz)
 
 	base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
 	uart_send(obuffer, obuffer_len);
+	obuffer[obuffer_len] = 0;
+	LOG_INF("%s", log_strdup(obuffer));
 }
 
 #define	FORCE_GPIO_1_7_HIGH	1
