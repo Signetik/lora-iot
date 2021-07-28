@@ -24,10 +24,6 @@
 OS_DIR=../zephyr
 APP_DIR=client
 
-BUILD_DIR=_build
-HEX=${BUILD_DIR}/zephyr/zephyr.hex
-#UPDATE=${BUILD_DIR}/zephyr/app_update.bin
-
 pushd ${OS_DIR}
 GIT_Z_DIFF=`git diff --quiet --exit-code || echo +`
 GIT_Z_TAG=`git describe --exact-match`
@@ -42,8 +38,6 @@ popd
 GIT_DIFF=`git diff --quiet --exit-code || echo +`
 GIT_TAG=`git describe --tags`
 
-west build -b signetik_siglrn client -d ${BUILD_DIR}
-
 #echo "BIN file is for updating from server"
 echo "[${GIT_TAG}:${GIT_Z_TAG}]"
 if [ ${GIT_TAG} == ${GIT_Z_TAG} ] ; then
@@ -51,6 +45,5 @@ if [ ${GIT_TAG} == ${GIT_Z_TAG} ] ; then
 else
     vername=${GIT_TAG}${GIT_DIFF}-os:${GIT_Z_TAG}${GIT_Z_DIFF}
 fi
-cp ${HEX} sig_${vername}.hex
-echo "HEX file sig_${vername} is for flashing locally"
-#cp ${UPDATE} sig_${GIT_TAG}${GIT_DIFF}.bin
+
+echo "Version: sig_${vername}"
