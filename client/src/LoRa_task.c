@@ -155,9 +155,9 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 
 void display_base64_data(uint8_t *buffer, int sz);
 
-void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
+void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate, uint8_t tx_power)
 {
-	char status_str[16];
+	char status_str[32];
 
 	static led_msg_t led_msg = {
 		.red = true,
@@ -169,7 +169,7 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
 	k_sem_give(&sem_tx_busy);
 
-	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
+	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d,pow:%d",	channel, data_rate, tx_power);
 
 	k_sem_take(&sem_rx_cb, K_FOREVER);
 	if (success) {
