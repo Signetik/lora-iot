@@ -119,7 +119,10 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 	lorawan_set_datarate(var_lora_datarate);
 
 	// Channel mask	selection
-	lorawan_set_channelmask(var_lora_chan_mask.data);
+	lorawan_set_channelmask((uint16_t*)&var_lora_chan_mask.data[0]);
+
+	// RX delay setting
+	lorawan_set_rxdelay(var_lora_rxdelay1, var_lora_rxdelay2);
 
 	lorawan_set_datarate(var_lora_datarate);
 
@@ -152,9 +155,9 @@ static int lora_configure(struct lorawan_join_config *join_cfg)
 
 void display_base64_data(uint8_t *buffer, int sz);
 
-void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
+void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate, uint8_t tx_power)
 {
-	char status_str[16];
+	char status_str[32];
 
 	static led_msg_t led_msg = {
 		.red = true,
@@ -166,24 +169,27 @@ void lorawan_tx_data(bool success, uint32_t	channel, uint8_t data_rate)
 	k_msgq_put(&led_msgq, &led_msg,	K_MSEC(100));
 	k_sem_give(&sem_tx_busy);
 
-	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d",	channel, data_rate);
+	snprintf(status_str, sizeof(status_str)-1, "chan:%d,dr:%d,pow:%d",	channel, data_rate, tx_power);
 
 	k_sem_take(&sem_rx_cb, K_FOREVER);
 	if (success) {
 		uart_send("+notify,lora:tx,status:success,", 0);
-		uart_send(status_str, 0);
-		uart_send("\r\n", 0);
+		LOG_INF("+notify,lora:tx,status:success,");
 	}
 	else {
 		uart_send("+notify,lora:tx,status:fail,", 0);
-		uart_send(status_str, 0);
-		uart_send("\r\n", 0);
+		LOG_INF("+notify,lora:tx,status:fail,");
 	}
+	uart_send(status_str, 0);
+	uart_send("\r\n", 0);
+	LOG_INF("%s", log_strdup(status_str));
 	k_sem_give(&sem_rx_cb);
 }
 
-void lorawan_rx_data(uint8_t *buffer, int sz)
+void lorawan_rx_data(uint8_t *buffer, int sz, uint8_t port, int16_t rssi, uint8_t data_rate)
 {
+	char status_str[32];
+
 	led_msg_t led_msg = {
 		.red = false,
 		.green = true,
@@ -197,10 +203,15 @@ void lorawan_rx_data(uint8_t *buffer, int sz)
 #if	!defined(CONFIG_SIGNETIK_APP_NONE)
 		custom_app_rx(buffer, sz);
 #endif
+		snprintf(status_str, sizeof(status_str)-1, ",port:%d,dr:%d,rssi:%d",	port, data_rate, rssi);
+
 		k_sem_take(&sem_rx_cb, K_FOREVER);
 		uart_send("+notify,lora:rx,base64:", 0);
+		LOG_INF("+notify,lora:rx,base64:");
 		display_base64_data(buffer, sz);
+		uart_send(status_str, 0);
 		uart_send("\r\n", 0);
+		LOG_INF("%s", log_strdup(status_str));
 		k_sem_give(&sem_rx_cb);
 	}
 
@@ -215,6 +226,8 @@ void display_base64_data(uint8_t *buffer, int sz)
 
 	base64_encode(obuffer, obuffer_len,	&obuffer_len, buffer, sz);
 	uart_send(obuffer, obuffer_len);
+	obuffer[obuffer_len] = 0;
+	LOG_INF("%s", log_strdup(obuffer));
 }
 
 #define	FORCE_GPIO_1_7_HIGH	1

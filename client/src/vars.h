@@ -163,6 +163,8 @@ extern uint16_t	var_polltimeout;
 
 extern bool	var_lora_adr;
 extern uint8_t	var_lora_datarate;
+extern uint16_t var_lora_rxdelay1;
+extern uint16_t var_lora_rxdelay2;
 extern struct var_str_s	var_lora_class;
 extern struct var_str_s	var_lora_auth;
 extern struct var_bin_s	var_lora_app_skey;
