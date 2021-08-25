@@ -83,7 +83,9 @@ LOG_MODULE_REGISTER(ledtask, CONFIG_SIGNETIK_CLIENT_LOG_LEVEL);
  * Module Variables.
  */
 
+#if(0)
 static const struct device *led_en = NULL;
+#endif
 static const struct device *led_r	= NULL;
 static const struct device *led_g	= NULL;
 static const struct device *led_b	= NULL;
@@ -113,8 +115,10 @@ void led_thread(void *p1, void *p2,	void *p3)
 	gpio_pin_configure(led_g, LEDG_PIN,	GPIO_OUTPUT_INACTIVE | LEDG_FLAGS);
 	led_b =	device_get_binding(LEDB_LABEL);
 	gpio_pin_configure(led_b, LEDB_PIN,	GPIO_OUTPUT_INACTIVE | LEDB_FLAGS);
+#if(0)
 	led_en = device_get_binding(LEDEN_LABEL);
 	gpio_pin_configure(led_en, LEDEN_PIN, GPIO_OUTPUT_INACTIVE | LEDEN_FLAGS);
+#endif
 
 	while (1)
 	{
@@ -124,7 +128,9 @@ void led_thread(void *p1, void *p2,	void *p3)
 			gpio_pin_set(led_r,	LEDR_PIN,	led_msg.red);
 			gpio_pin_set(led_g,	LEDG_PIN,	led_msg.green);
 			gpio_pin_set(led_b,	LEDB_PIN,	led_msg.blue);
+#if(0)
 			gpio_pin_set(led_en, LEDEN_PIN,	led_msg.enable);
+#endif
 		}
 		else
 		{
@@ -134,7 +140,9 @@ void led_thread(void *p1, void *p2,	void *p3)
 			gpio_pin_set(led_r,	LEDR_PIN,	var_leds & 0x4);
 			gpio_pin_set(led_g,	LEDG_PIN,	var_leds & 0x2);
 			gpio_pin_set(led_b,	LEDB_PIN,	var_leds & 0x1);
+#if(0)
 			gpio_pin_set(led_en, LEDEN_PIN,	var_leds & 0x8);
+#endif
 		}
 		k_msgq_get(&led_msgq, &led_msg,	K_FOREVER);
 	}

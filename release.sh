@@ -42,7 +42,7 @@ popd
 GIT_DIFF=`git diff --quiet --exit-code || echo +`
 GIT_TAG=`git describe --tags`
 
-west build -b signetik_siglrn client -d ${BUILD_DIR}
+west build -b signetik_siglrn_n1 client -d ${BUILD_DIR}
 
 #echo "BIN file is for updating from server"
 echo "[${GIT_TAG}:${GIT_Z_TAG}]"
