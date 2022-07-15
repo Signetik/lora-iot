@@ -1,0 +1,6 @@
+_build
+_build_debug
+siglrn_v*.hex
+siglrn_v*.bin
+sig_lrn-*.hex
+sig_lrn-*.bin

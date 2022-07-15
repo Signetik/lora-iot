@@ -1,0 +1,50 @@
+# /*============================================================================*
+#  *         Copyright © 2019-2021 Signetik, LLC -- All Rights Reserved         *
+#  *----------------------------------------------------------------------------*
+#  *                                                              Signetik, LLC *
+#  *                                                           www.signetik.com *
+#  *                                          SPDX-License-Identifier: Sigentik *
+#  *                                                                            *
+#  * Customer may modify, compile, assemble and convert this source code into   *
+#  * binary object or executable code for use on Signetk products purchased     *
+#  * from Signetik or its distributors.                                         *
+#  *                                                                            *
+#  * Customer may incorporate or embed an binary executable version of the      *
+#  * software into the Customer’s product(s), which incorporate a Signetik      *
+#  * product purchased from Signetik or its distributors. Customer may          *
+#  * manufacture, brand and distribute such Customer’s product(s) worldwide to  *
+#  * its End-Users.                                                             *
+#  *                                                                            *
+#  * This agreement must be formalized with Signetik before Customer enters     *
+#  * production and/or distributes products to Customer's End-Users             *
+#  *============================================================================*/
+
+menu "Signetik Client"
+
+choice SENSOR_POLLING_METHOD_UART_FORMAT
+	bool "Sensor polling method UART format"
+	default SENSOR_POLLING_METHOD_UART_PUSH
+config SENSOR_POLLING_METHOD_UART_BINARY
+	bool "Sensor UART binary modem"
+config SENSOR_POLLING_METHOD_UART_PUSH
+	bool "Sensor UART push sensor"
+endchoice
+
+choice  SIGNETIK_APP
+	bool "Custom application"
+	default SIGNETIK_APP_NONE
+config SIGNETIK_APP_NONE
+	bool "No custom application"
+config SIGNETIK_APP_LORATEST
+	bool "LoRa test application"
+endchoice
+
+module = SIGNETIK_CLIENT
+module-dep = LOG
+module-str = Signetik Client
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+endmenu
+
+menu "Zephyr Kernel"
+source "$ZEPHYR_BASE/Kconfig.zephyr"
+endmenu
